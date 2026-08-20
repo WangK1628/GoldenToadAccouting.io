@@ -25,8 +25,10 @@ jobs:
       - name: Build release APK
         working-directory: android
         run: ./gradlew assembleRelease
+      - name: Rename APK for release
+        run: cp android/app/build/outputs/apk/release/app-release-unsigned.apk golden-toad-accounting.apk
       - uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/')
         with:
-          files: android/app/build/outputs/apk/release/app-release-unsigned.apk
+          files: golden-toad-accounting.apk
           generate_release_notes: true
