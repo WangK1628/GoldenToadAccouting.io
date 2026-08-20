@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>使用指南 · 金蝉记账</title>
+    <link rel="icon" href="../favicon.svg" type="image/svg+xml" />
+    <style>
+      body {
+        margin: 0;
+        font-family: 'PingFang SC', 'Segoe UI', sans-serif;
+        background: #fbf8f0;
+        color: #2c2416;
+        line-height: 1.65;
+      }
+      .wrap {
+        max-width: 680px;
+        margin: 0 auto;
+        padding: 2rem 1.25rem 3rem;
+      }
+      h1 {
+        color: #a8841a;
+      }
+      h2 {
+        margin-top: 2rem;
+        color: #a8841a;
+        font-size: 1.15rem;
+      }
+      a {
+        color: #a8841a;
+      }
+      code {
+        background: #f5e6b8;
+        padding: 0.1rem 0.35rem;
+        border-radius: 4px;
+        font-size: 0.9em;
+      }
+      ul {
+        padding-left: 1.2rem;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <p><a href="index.html">← 返回首页</a></p>
+      <h1>金蝉记账 · 使用指南</h1>
+
+      <h2>1. 登录与游客模式</h2>
+      <ul>
+        <li>首次打开可选择<strong>登录 / 注册</strong>或<strong>稍后再说</strong>进入游客模式。</li>
+        <li>本地版验证码会直接显示在提示中（无邮件服务）。</li>
+        <li>所有数据保存在设备本地 IndexedDB，不会上传服务器。</li>
+      </ul>
+
+      <h2>2. 手动记账</h2>
+      <ul>
+        <li>首页底部输入框或「记一笔」打开记账面板。</li>
+        <li>选择收支、分类、金额，保存后出现在流水列表。</li>
+      </ul>
+
+      <h2>3. AI 记账</h2>
+      <ul>
+        <li>进入 <strong>设置 → AI 设置</strong>，填入 DeepSeek 或 OpenAI 兼容 API Key。</li>
+        <li>打开 <strong>AI 记账</strong>，输入或语音说：「午饭花了 32」。</li>
+        <li>AI 通过 Tool Calling 自动记账，支持一次多笔。</li>
+      </ul>
+
+      <h2>4. 统计与预算</h2>
+      <ul>
+        <li><strong>统计</strong>：日/周/月/年趋势、分类占比、收支日历。</li>
+        <li><strong>预算</strong>：设置月度预算，首页圆环显示进度。</li>
+      </ul>
+
+      <h2>5. 数据管理</h2>
+      <ul>
+        <li>支持 JSON / CSV / Excel / TXT 导入导出。</li>
+        <li>清空数据需二次确认。</li>
+      </ul>
+
+      <h2>6. 安装</h2>
+      <ul>
+        <li><strong>网页版</strong>：Chrome / Edge 可「安装应用」到主屏幕（PWA）。</li>
+        <li><strong>Android</strong>：从 <a href="https://github.com/WangK1628/GoldenToadAccouting.io/releases">Releases</a> 下载 APK。</li>
+      </ul>
+
+      <p style="margin-top: 2rem; color: #7a6f5c; font-size: 0.88rem">
+        作者 <a href="https://github.com/WangK1628">@WangK1628</a>
+      </p>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">金蝉记账</string>
+    <string name="title_activity_main">金蝉记账</string>
+    <string name="package_name">io.goldentoad.accounting</string>
+    <string name="custom_url_scheme">io.goldentoad.accounting</string>
+</resources>

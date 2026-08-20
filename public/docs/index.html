@@ -1,0 +1,249 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="金蝉记账 — 一句话，记清花销。本地优先，AI 语音记账。" />
+    <meta name="theme-color" content="#C9A227" />
+    <title>金蝉记账 · Golden Toad Accounting</title>
+    <link rel="icon" href="../favicon.svg" type="image/svg+xml" />
+    <style>
+      :root {
+        --bg0: #fbf8f0;
+        --bg1: #f3ecda;
+        --ink: #2c2416;
+        --muted: #7a6f5c;
+        --brand: #c9a227;
+        --brand-deep: #a8841a;
+        --accent-soft: #f5e6b8;
+        --panel: #fffdf8;
+        --line: #e6dcc8;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        font-family: 'PingFang SC', 'Segoe UI', system-ui, sans-serif;
+        color: var(--ink);
+        background: linear-gradient(180deg, var(--bg1) 0%, var(--bg0) 100%);
+        line-height: 1.6;
+      }
+      a {
+        color: var(--brand-deep);
+      }
+      .wrap {
+        max-width: 720px;
+        margin: 0 auto;
+        padding: 2rem 1.25rem 3rem;
+      }
+      .hero {
+        text-align: center;
+        padding: 1.5rem 0 2rem;
+      }
+      .hero img {
+        width: 80px;
+        height: 80px;
+        border-radius: 20px;
+        filter: drop-shadow(0 6px 16px rgba(168, 132, 26, 0.2));
+      }
+      .hero h1 {
+        margin: 1rem 0 0.35rem;
+        font-size: 2rem;
+        color: var(--brand-deep);
+      }
+      .hero .lead {
+        margin: 0;
+        font-size: 1.05rem;
+        color: var(--muted);
+      }
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.65rem;
+        justify-content: center;
+        margin-top: 1.5rem;
+      }
+      .btn {
+        display: inline-block;
+        padding: 0.7rem 1.25rem;
+        border-radius: 999px;
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 0.92rem;
+      }
+      .btn-primary {
+        background: linear-gradient(180deg, var(--brand) 0%, var(--brand-deep) 100%);
+        color: #fff;
+      }
+      .btn-secondary {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        color: var(--brand-deep);
+      }
+      .preview {
+        margin: 2rem 0;
+        padding: 1rem;
+        border-radius: 18px;
+        background: var(--panel);
+        border: 1px solid var(--line);
+        text-align: center;
+      }
+      .preview img {
+        max-width: 280px;
+        width: 100%;
+      }
+      section {
+        margin-top: 2.5rem;
+      }
+      section h2 {
+        text-align: center;
+        font-size: 1.35rem;
+        color: var(--brand-deep);
+        margin-bottom: 1.25rem;
+      }
+      .grid {
+        display: grid;
+        gap: 0.85rem;
+      }
+      @media (min-width: 560px) {
+        .grid {
+          grid-template-columns: 1fr 1fr;
+        }
+      }
+      .card {
+        padding: 1rem;
+        border-radius: 14px;
+        background: var(--panel);
+        border: 1px solid var(--line);
+      }
+      .card h3 {
+        margin: 0 0 0.35rem;
+        font-size: 1rem;
+      }
+      .card p {
+        margin: 0;
+        font-size: 0.88rem;
+        color: var(--muted);
+      }
+      .steps {
+        display: grid;
+        gap: 1rem;
+      }
+      .step {
+        display: flex;
+        gap: 0.85rem;
+        align-items: flex-start;
+      }
+      .step-num {
+        flex-shrink: 0;
+        width: 2rem;
+        height: 2rem;
+        border-radius: 50%;
+        background: var(--accent-soft);
+        color: var(--brand-deep);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+      }
+      footer {
+        margin-top: 3rem;
+        text-align: center;
+        font-size: 0.82rem;
+        color: var(--muted);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <header class="hero">
+        <img src="../favicon.svg" alt="金蝉记账" />
+        <h1>一句话，<br />记清花销</h1>
+        <p class="lead">打字或语音说一句，支出或收入都能记上。自动完成归类。</p>
+        <div class="actions">
+          <a class="btn btn-primary" href="https://github.com/WangK1628/GoldenToadAccouting.io/releases/latest">立即下载</a>
+          <a class="btn btn-secondary" href="../">网页版使用</a>
+          <a class="btn btn-secondary" href="guide.html">使用指南</a>
+        </div>
+      </header>
+
+      <div class="preview">
+        <p style="margin: 0 0 0.75rem; color: var(--muted); font-size: 0.88rem">金蝉记账</p>
+        <a href="../">打开网页版</a>
+      </div>
+
+      <section>
+        <h2>能做什么</h2>
+        <div class="grid">
+          <div class="card">
+            <h3>口语记账</h3>
+            <p>直接说「午饭花了 32」，支出或收入都能记上。</p>
+          </div>
+          <div class="card">
+            <h3>一次多笔</h3>
+            <p>咖啡、地铁、午饭一起说，一次记完。</p>
+          </div>
+          <div class="card">
+            <h3>智能分类</h3>
+            <p>自动归类，也能新建分类；可查某天、某时段或按分类花了多少。</p>
+          </div>
+          <div class="card">
+            <h3>多账本</h3>
+            <p>生活、出差分开记。</p>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <h2>怎么记</h2>
+        <div class="steps">
+          <div class="step">
+            <div class="step-num">1</div>
+            <div>
+              <h3 style="margin: 0 0 0.25rem">说一句</h3>
+              <p style="margin: 0; color: var(--muted); font-size: 0.88rem">
+                「午饭花了 32」，或一次把咖啡、地铁、午饭说完。
+              </p>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num">2</div>
+            <div>
+              <h3 style="margin: 0 0 0.25rem">AI 分类</h3>
+              <p style="margin: 0; color: var(--muted); font-size: 0.88rem">
+                自动归到餐饮、交通等；没有合适的，可以让它新建。
+              </p>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num">3</div>
+            <div>
+              <h3 style="margin: 0 0 0.25rem">落到账本</h3>
+              <p style="margin: 0; color: var(--muted); font-size: 0.88rem">
+                出现在当月流水里，可按天或按分类查看花了多少。
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section style="text-align: center">
+        <h2>开始记账</h2>
+        <p style="color: var(--muted)">下载 Android 安装包，或打开网页版（支持 PWA，可安装到主屏幕）。</p>
+        <div class="actions">
+          <a class="btn btn-primary" href="https://github.com/WangK1628/GoldenToadAccouting.io/releases/latest">去下载</a>
+          <a class="btn btn-secondary" href="../">网页版使用</a>
+        </div>
+      </section>
+
+      <footer>
+        <p>
+          <a href="https://github.com/WangK1628">@WangK1628</a> ·
+          <a href="https://github.com/WangK1628/GoldenToadAccouting.io">GitHub</a>
+        </p>
+        <p>本地优先 · 独立实现 · 不依赖妙蛙服务端</p>
+      </footer>
+    </div>
+  </body>
+</html>

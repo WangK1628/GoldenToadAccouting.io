@@ -1,0 +1,61 @@
+{
+  "name": "golden-toad-accounting",
+  "private": true,
+  "version": "0.2.0",
+  "description": "金蝉记账 — 本地优先 AI 记账 PWA",
+  "author": "WangK1628 (https://github.com/WangK1628)",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/WangK1628/GoldenToadAccouting.io.git"
+  },
+  "homepage": "https://wangk1628.github.io/GoldenToadAccouting.io/",
+  "bugs": {
+    "url": "https://github.com/WangK1628/GoldenToadAccouting.io/issues"
+  },
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vue-tsc -b && vite build",
+    "build:pages": "cross-env GITHUB_PAGES=true npm run build",
+    "preview": "vite preview",
+    "lint": "eslint . --max-warnings 0",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write \"src/**/*.{ts,vue,css,json}\"",
+    "format:check": "prettier --check \"src/**/*.{ts,vue,css,json}\"",
+    "typecheck": "vue-tsc -b --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "cap:sync": "npm run build && npx cap sync android",
+    "android:build": "npm run cap:sync && cd android && gradlew.bat assembleRelease"
+  },
+  "dependencies": {
+    "@capacitor/android": "^8.5.0",
+    "@capacitor/cli": "^8.5.0",
+    "@capacitor/core": "^8.5.0",
+    "dexie": "^4.0.11",
+    "pinia": "^3.0.3",
+    "vue": "^3.5.18",
+    "vue-router": "^4.5.1",
+    "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.33.0",
+    "@types/node": "^26.2.0",
+    "@vitejs/plugin-vue": "^6.0.1",
+    "cross-env": "^10.1.0",
+    "eslint": "^9.33.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-vue": "^10.4.0",
+    "globals": "^16.3.0",
+    "happy-dom": "^20.11.6",
+    "prettier": "^3.6.2",
+    "typescript": "~5.8.3",
+    "typescript-eslint": "^8.39.1",
+    "vite": "^7.1.2",
+    "vite-plugin-pwa": "^1.0.2",
+    "vitest": "^4.1.11",
+    "vue-tsc": "^3.0.5",
+    "workbox-window": "^7.3.0"
+  }
+}

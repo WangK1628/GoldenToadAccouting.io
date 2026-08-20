@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/favicon.svg" />
+    <meta name="theme-color" content="#C9A227" />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="金蝉记账" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-content"
+    />
+    <title>金蝉记账</title>
+    <style>
+      html,
+      body {
+        margin: 0;
+        width: 100%;
+        height: 100%;
+        background: #fbf8f0;
+        -webkit-text-size-adjust: 100%;
+        text-size-adjust: 100%;
+        touch-action: manipulation;
+      }
+      @media (prefers-color-scheme: dark) {
+        html:not([data-theme='light']) body {
+          background: #1a1712;
+        }
+        html:not([data-theme='light']) #app-boot {
+          background: linear-gradient(180deg, #252018 0%, #1a1712 48%, #14110d 100%);
+        }
+        html:not([data-theme='light']) #app-boot .name {
+          color: #d4ad2f;
+        }
+        html:not([data-theme='light']) #app-boot .slogan {
+          color: #b8aa92;
+        }
+        html:not([data-theme='light']) #app-boot .bar {
+          background: #3a3228;
+        }
+      }
+      html[data-theme='dark'] body {
+        background: #1a1712;
+      }
+      html[data-theme='dark'] #app-boot {
+        background: linear-gradient(180deg, #252018 0%, #1a1712 48%, #14110d 100%);
+      }
+      html[data-theme='dark'] #app-boot .name {
+        color: #d4ad2f;
+      }
+      html[data-theme='dark'] #app-boot .slogan {
+        color: #b8aa92;
+      }
+      html[data-theme='dark'] #app-boot .bar {
+        background: #3a3228;
+      }
+      #app-boot {
+        position: fixed;
+        inset: 0;
+        z-index: 9999;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        background:
+          radial-gradient(ellipse 110% 50% at 50% -8%, #f5e6b8 0%, transparent 52%),
+          linear-gradient(180deg, #f8f0dc 0%, #fbf8f0 48%, #fffdf8 100%);
+        transition: opacity 0.28s ease;
+      }
+      #app-boot.is-out {
+        opacity: 0;
+        pointer-events: none;
+      }
+      #app-boot .logo {
+        display: block;
+        width: 72px;
+        height: 72px;
+        border-radius: 18px;
+        filter: drop-shadow(0 4px 10px rgba(168, 132, 26, 0.2));
+      }
+      #app-boot .name {
+        margin: 0.85rem 0 0;
+        font-size: 1.25rem;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+        color: #a8841a;
+        font-family: 'PingFang SC', 'Segoe UI', sans-serif;
+      }
+      #app-boot .slogan {
+        margin: 0.3rem 0 0;
+        font-size: 0.82rem;
+        color: #7a6f5c;
+        font-family: 'PingFang SC', 'Segoe UI', sans-serif;
+      }
+      #app-boot .bar {
+        width: 120px;
+        height: 3px;
+        margin-top: 1.35rem;
+        overflow: hidden;
+        border-radius: 99px;
+        background: #e6dcc8;
+      }
+      #app-boot .bar > i {
+        display: block;
+        width: 40%;
+        height: 100%;
+        border-radius: 99px;
+        background: #c9a227;
+        animation: app-boot-bar 1.15s ease-in-out infinite;
+      }
+      @keyframes app-boot-bar {
+        0% {
+          transform: translateX(-120%);
+        }
+        100% {
+          transform: translateX(280%);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app-boot" aria-busy="true" aria-label="加载中">
+      <img class="logo" src="/favicon.svg" alt="" width="72" height="72" />
+      <p class="name">金蝉记账</p>
+      <p class="slogan">语音记一笔，账单自己长出来</p>
+      <div class="bar" aria-hidden="true"><i></i></div>
+    </div>
+    <script>
+      window.hideAppBoot = function () {
+        var el = document.getElementById('app-boot')
+        if (!el || el.classList.contains('is-out')) return
+        el.classList.add('is-out')
+        setTimeout(function () {
+          if (el.parentNode) el.parentNode.removeChild(el)
+        }, 280)
+      }
+    </script>
+    <div id="app"></div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

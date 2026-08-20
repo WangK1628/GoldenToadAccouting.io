@@ -1,0 +1,152 @@
+import { onUnmounted, ref } from 'vue'
+
+type SpeechRecognitionCtor = new () => SpeechRecognitionInstance
+
+interface SpeechRecognitionInstance extends EventTarget {
+  lang: string
+  continuous: boolean
+  interimResults: boolean
+  start(): void
+  stop(): void
+  abort(): void
+  onresult: ((event: SpeechRecognitionResultEvent) => void) | null
+  onerror: ((event: SpeechRecognitionErrorEvent) => void) | null
+  onend: (() => void) | null
+}
+
+interface SpeechRecognitionResultEvent extends Event {
+  results: SpeechRecognitionResultList
+}
+
+interface SpeechRecognitionErrorEvent extends Event {
+  error: string
+}
+
+function getRecognitionCtor(): SpeechRecognitionCtor | null {
+  const w = window as Window & {
+    SpeechRecognition?: SpeechRecognitionCtor
+    webkitSpeechRecognition?: SpeechRecognitionCtor
+  }
+  return w.SpeechRecognition ?? w.webkitSpeechRecognition ?? null
+}
+
+export function useSpeechRecognition() {
+  const supported = Boolean(getRecognitionCtor())
+  const listening = ref(false)
+  const interimText = ref('')
+  const finalText = ref('')
+  const error = ref<string | null>(null)
+
+  let recognition: SpeechRecognitionInstance | null = null
+  let endResolve: (() => void) | null = null
+
+  function ensureRecognition() {
+    const Ctor = getRecognitionCtor()
+    if (!Ctor) return null
+    if (!recognition) {
+      recognition = new Ctor()
+      recognition.lang = 'zh-CN'
+      recognition.continuous = true
+      recognition.interimResults = true
+
+      recognition.onresult = (event) => {
+        let interim = ''
+        let final = ''
+        for (let i = 0; i < event.results.length; i++) {
+          const result = event.results[i]
+          const text = result[0]?.transcript?.trim() ?? ''
+          if (!text) continue
+          if (result.isFinal) final += text
+          else interim += text
+        }
+        if (final) {
+          finalText.value = `${finalText.value}${final}`.trim()
+        }
+        interimText.value = interim
+      }
+
+      recognition.onerror = (event) => {
+        if (event.error !== 'aborted' && event.error !== 'no-speech') {
+          error.value = event.error
+        }
+      }
+
+      recognition.onend = () => {
+        listening.value = false
+        endResolve?.()
+        endResolve = null
+      }
+    }
+    return recognition
+  }
+
+  function start() {
+    error.value = null
+    interimText.value = ''
+    finalText.value = ''
+    const rec = ensureRecognition()
+    if (!rec) {
+      error.value = 'unsupported'
+      return false
+    }
+    try {
+      rec.start()
+      listening.value = true
+      return true
+    } catch {
+      error.value = 'start-failed'
+      listening.value = false
+      return false
+    }
+  }
+
+  function stop() {
+    recognition?.stop()
+  }
+
+  function cancel() {
+    recognition?.abort()
+    listening.value = false
+    interimText.value = ''
+    finalText.value = ''
+  }
+
+  async function stopAndWait(timeoutMs = 1600): Promise<void> {
+    if (!recognition || !listening.value) return
+    await new Promise<void>((resolve) => {
+      endResolve = resolve
+      recognition?.stop()
+      window.setTimeout(resolve, timeoutMs)
+    })
+  }
+
+  function displayTranscript(): string {
+    return `${finalText.value}${interimText.value}`.trim()
+  }
+
+  function consumeTranscript(): string {
+    const text = displayTranscript()
+    interimText.value = ''
+    finalText.value = ''
+    return text
+  }
+
+  onUnmounted(() => {
+    cancel()
+    recognition = null
+  })
+
+  return {
+    supported,
+    listening,
+    interimText,
+    finalText,
+    error,
+    start,
+    stop,
+    cancel,
+    stopAndWait,
+    displayTranscript,
+    consumeTranscript,
+  }
+}
