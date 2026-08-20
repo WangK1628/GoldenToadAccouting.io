@@ -127,11 +127,6 @@ async function skipLogin() {
         </button>
       </form>
 
-      <p v-if="tab === 'password'" class="hint">
-        邮箱 + 密码保存在本机。首次输入会自动创建账号，无需验证码。
-      </p>
-      <p v-else class="hint">验证码会发到你的邮箱，页面不会显示验证码。</p>
-
       <div class="links">
         <button type="button" @click="router.push('/register')">注册账号</button>
         <button type="button" @click="router.push('/forgot-password')">忘记密码</button>
@@ -276,13 +271,6 @@ async function skipLogin() {
   cursor: default;
 }
 
-.hint {
-  margin: 0 0 0.85rem;
-  font-size: 0.72rem;
-  color: var(--muted-2);
-  line-height: 1.45;
-}
-
 .primary {
   width: 100%;
   border: none;
@@ -297,14 +285,6 @@ async function skipLogin() {
 
 .primary:disabled {
   opacity: 0.65;
-}
-
-.hint {
-  margin: 0.7rem 0 0;
-  font-size: 0.72rem;
-  color: var(--muted-2);
-  line-height: 1.45;
-  text-align: center;
 }
 
 .links {

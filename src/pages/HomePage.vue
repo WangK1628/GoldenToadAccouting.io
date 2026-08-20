@@ -9,7 +9,6 @@ import Mascot from '@/components/common/Mascot.vue'
 import { useAppStore } from '@/stores/app.store'
 import { useAuthStore } from '@/stores/auth.store'
 import { useUiStore } from '@/stores/ui.store'
-import { useGuideStore } from '@/stores/guide.store'
 import { appService } from '@/services'
 import type { TransactionDisplay } from '@/models/display'
 import { centsToYuanString } from '@/utils/money'
@@ -36,13 +35,12 @@ const today = todayDateString()
 const weekDates = datesOfWeek(today)
 
 const router = useRouter()
-const guideStore = useGuideStore()
 const appStore = useAppStore()
 const authStore = useAuthStore()
 const uiStore = useUiStore()
 
-const menuOpen = ref(false)
 const loading = ref(true)
+const menuOpen = ref(false)
 const yearMonth = ref(currentYearMonth())
 const summary = ref({ expense: 0, income: 0, balance: 0, count: 0 })
 const dailyAvg = ref(0)
@@ -52,7 +50,10 @@ const selectedDate = computed(() => weekDates[selectedWeekday.value] ?? today)
 const isFutureDay = computed(() => selectedDate.value > today)
 
 const monthLabel = computed(() => formatYearMonthLabel(yearMonth.value))
-const isGuest = computed(() => authStore.session?.mode !== 'registered')
+const isGuest = computed(() => authStore.session?.mode === 'guest')
+const isLoggedIn = computed(
+  () => authStore.session?.mode === 'registered' || authStore.session?.mode === 'admin',
+)
 
 function buildGroup(date: string, byDate: Map<string, TransactionDisplay[]>): DayGroup {
   const items = (byDate.get(date) ?? []).slice().sort((a, b) => (a.time < b.time ? 1 : -1))
@@ -101,6 +102,10 @@ async function loadData() {
 
 onMounted(async () => {
   await appStore.initialize()
+  if (authStore.session?.mode === 'guest') {
+    const seeded = await appService.ensureDemoPreview()
+    if (seeded) uiStore.bumpData()
+  }
   await loadData()
 })
 
@@ -115,7 +120,6 @@ watch(yearMonth, () => {
 
 function selectWeekday(index: number) {
   selectedWeekday.value = index
-  guideStore.notify('weekdays')
   const date = weekDates[index]
   if (!date || date > today) return
   void nextTick(() => {
@@ -143,13 +147,7 @@ function openLedgers() {
 }
 
 function goLogin() {
-  guideStore.notify('settings')
   router.push('/login')
-}
-
-function openSettings() {
-  guideStore.notify('settings')
-  router.push('/settings')
 }
 
 function shiftMonth(delta: number) {
@@ -162,26 +160,41 @@ function shiftMonth(delta: number) {
 <template>
   <div class="home-page">
     <header class="topbar">
-      <button type="button" class="icon-btn" aria-label="菜单" @click="menuOpen = true">
+      <button
+        type="button"
+        class="icon-btn"
+        data-guide="menu-btn"
+        aria-label="菜单"
+        @click="menuOpen = true"
+      >
         <span class="burger" aria-hidden="true" />
       </button>
       <h1 class="title">
         <Mascot :size="28" rounded />
         金蝉记账
       </h1>
-      <button v-if="isGuest" type="button" class="login-chip" data-guide="settings-btn" @click="goLogin">
-        去登录
-      </button>
       <button
-        v-else
+        v-if="isLoggedIn"
         type="button"
         class="login-chip"
-        data-guide="settings-btn"
-        @click="openSettings"
+        data-guide="profile-btn"
+        aria-label="个人中心"
+        @click="router.push('/profile')"
       >
-        设置
+        账户
+      </button>
+      <button
+        v-else-if="isGuest"
+        type="button"
+        class="login-chip"
+        data-guide="login-btn"
+        @click="goLogin"
+      >
+        去登录
       </button>
     </header>
+
+    <div v-if="isGuest && !loading" class="demo-banner">演示流水 · 登录后切换为你自己的账本</div>
 
     <SideMenu :open="menuOpen" @close="menuOpen = false" />
 
@@ -319,6 +332,10 @@ function shiftMonth(delta: number) {
   cursor: pointer;
 }
 
+.settings-btn {
+  color: var(--ink);
+}
+
 .burger {
   display: block;
   width: 1.05rem;
@@ -338,6 +355,16 @@ function shiftMonth(delta: number) {
   color: var(--brand-deep);
   font-size: 0.78rem;
   cursor: pointer;
+}
+
+.demo-banner {
+  margin: 0 0.9rem 0.35rem;
+  padding: 0.42rem 0.72rem;
+  border-radius: 12px;
+  background: rgba(201, 162, 39, 0.14);
+  color: var(--brand-deep);
+  font-size: 0.76rem;
+  text-align: center;
 }
 
 .hero {

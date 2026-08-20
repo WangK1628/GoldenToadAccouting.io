@@ -1,6 +1,7 @@
 import { settingsRepository, userRepository } from '@/repositories'
 import { createPasswordHash, hashPassword } from '@/utils/crypto'
 import { isValidEmail, normalizeEmail } from '@/utils/email'
+import { createId } from '@/utils/id'
 import { ADMIN_ACCOUNT, isAdminAccount } from '@/constants/admin'
 import { SETTING_KEYS, type AuthMode, type AuthSession } from '@/models'
 
@@ -21,7 +22,12 @@ class AuthService {
     const raw = await settingsRepository.get(SETTING_KEYS.authSession)
     if (!raw) return null
     try {
-      return JSON.parse(raw) as AuthSession
+      const session = JSON.parse(raw) as AuthSession
+      if (session.mode === 'guest' && !session.userId) {
+        session.userId = createId('guest')
+        await this.saveSession(session)
+      }
+      return session
     } catch {
       return null
     }
@@ -36,9 +42,12 @@ class AuthService {
   }
 
   async enterGuestMode(): Promise<AuthSession> {
+    const existing = await this.getSession()
+    const userId =
+      existing?.mode === 'guest' && existing.userId ? existing.userId : createId('guest')
     const session: AuthSession = {
       mode: 'guest',
-      userId: null,
+      userId,
       email: null,
       displayName: '游客',
     }

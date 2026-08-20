@@ -4,7 +4,6 @@ import { useRouter } from 'vue-router'
 import VoiceOverlay from '@/components/voice/VoiceOverlay.vue'
 import { useToast } from '@/composables/useToast'
 import { useSpeechRecognition } from '@/composables/useSpeechRecognition'
-import { useGuideStore } from '@/stores/guide.store'
 
 const HOLD_MS = 180
 
@@ -30,7 +29,6 @@ const emit = defineEmits<{
 }>()
 
 const router = useRouter()
-const guideStore = useGuideStore()
 const toast = useToast()
 const speech = useSpeechRecognition()
 
@@ -49,7 +47,6 @@ const speechListening = computed(() => speech.listening.value)
 
 function openChat() {
   emit('chat')
-  guideStore.notify('chat')
   if (props.variant === 'home') {
     router.push('/chat')
   }
@@ -64,7 +61,6 @@ function submitText() {
 
 function onRecord() {
   emit('record')
-  guideStore.notify('record')
 }
 
 function clearHoldTimer() {
@@ -109,7 +105,6 @@ async function beginVoice() {
   if (props.disabled || holding.value) return
   if (!speech.supported) {
     toast.error('当前环境不支持语音识别，请用 Chrome / Edge，或在系统里允许麦克风')
-    guideStore.notify('voice')
     return
   }
   holding.value = true
@@ -123,7 +118,6 @@ async function beginVoice() {
     return
   }
   emit('voiceStart')
-  guideStore.notify('voice')
 }
 
 async function finishVoice() {
@@ -270,6 +264,10 @@ function onVoiceCancel() {
   gap: 0.5rem;
   z-index: 40;
   pointer-events: none;
+}
+
+.action-bar:has([data-guide-active='true']) {
+  z-index: 96;
 }
 
 .action-bar.chat-variant {

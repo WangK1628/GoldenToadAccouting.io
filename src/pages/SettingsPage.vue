@@ -53,7 +53,7 @@ const sections = computed<SettingsSection[]>(() => [
   {
     title: '数据',
     items: [
-      { label: '导入 / 导出', desc: authStore.canImportExport() ? 'JSON · CSV · Excel' : '登录后可用', to: '/settings/data', disabled: !authStore.canImportExport() },
+      { label: '导入 / 导出', desc: 'JSON · CSV · Excel · TXT', to: '/settings/data' },
       { label: '清空数据', desc: '二次确认', to: '/settings/data' },
     ],
   },

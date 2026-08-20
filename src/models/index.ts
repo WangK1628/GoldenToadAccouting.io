@@ -120,7 +120,11 @@ export interface AiSettings {
   model: string
   temperature: number
   trialEmail?: string
+  trialUserId?: string
 }
+
+/** 完成新手引导赠送的积分（仅可消耗一次 AI 记一笔） */
+export const GUIDE_REWARD_POINTS = 100
 
 export const SETTING_KEYS = {
   theme: 'theme',
@@ -132,7 +136,9 @@ export const SETTING_KEYS = {
   aiModel: 'ai.model',
   aiTemperature: 'ai.temperature',
   aiTrial: 'ai.trial',
+  aiPoints: 'ai.points',
   personalStarted: 'account.personalStarted',
   featureGuideDone: 'ui.featureGuideDone',
+  featureGuideOpsDone: 'ui.featureGuideOpsDone',
   emailPending: 'auth.emailPending',
 } as const

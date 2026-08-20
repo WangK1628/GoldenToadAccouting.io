@@ -1,21 +1,17 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import PageHeader from '@/components/layout/PageHeader.vue'
 import BottomSheet from '@/components/sheet/BottomSheet.vue'
 import { useToast } from '@/composables/useToast'
 import { useAppStore } from '@/stores/app.store'
-import { useAuthStore } from '@/stores/auth.store'
 import { useUiStore } from '@/stores/ui.store'
 import { exportService, importService } from '@/services'
 import type { ExportFormat } from '@/models/export'
 import type { ImportResult } from '@/models/export'
 
 const appStore = useAppStore()
-const authStore = useAuthStore()
 const uiStore = useUiStore()
 const toast = useToast()
-
-const canSync = computed(() => authStore.canImportExport())
 
 const exporting = ref(false)
 const importing = ref(false)
@@ -36,10 +32,6 @@ const exportOptions: Array<{ format: ExportFormat; label: string; desc: string }
 ]
 
 async function onExport(format: ExportFormat) {
-  if (!canSync.value) {
-    toast.error('登录后可导入导出数据')
-    return
-  }
   if (!appStore.currentBook || exporting.value) return
   exporting.value = true
   try {
@@ -60,10 +52,6 @@ async function onFileChange(event: Event) {
   const input = event.target as HTMLInputElement
   const file = input.files?.[0]
   input.value = ''
-  if (!canSync.value) {
-    toast.error('登录后可导入导出数据')
-    return
-  }
   if (!file || !appStore.currentBook || importing.value) return
 
   importing.value = true
@@ -96,6 +84,7 @@ async function confirmClear() {
     clearConfirm.value = ''
     await appStore.refreshBooks()
     uiStore.bumpData()
+    uiStore.playCleanVideo()
     toast.success('数据已重置')
   } catch (e) {
     toast.error(e instanceof Error ? e.message : '清空失败')
@@ -107,7 +96,7 @@ async function confirmClear() {
   <div class="data-page">
     <PageHeader title="数据管理" />
 
-    <section v-if="canSync" class="panel">
+    <section class="panel">
       <h2>导出</h2>
       <p class="hint">导出当前账本「{{ appStore.currentBook?.name ?? '—' }}」的流水数据</p>
       <div class="btn-grid">
@@ -125,9 +114,9 @@ async function confirmClear() {
       </div>
     </section>
 
-    <section v-if="canSync" class="panel">
+    <section class="panel">
       <h2>导入</h2>
-      <p class="hint">支持 JSON 备份、CSV、TXT、Excel（.xlsx / .xls），导入到当前账本</p>
+      <p class="hint">支持 JSON 备份、CSV、TXT、Excel（.xlsx / .xls），导入到当前账本。游客也可使用。</p>
       <input
         ref="fileInput"
         type="file"
@@ -150,8 +139,6 @@ async function confirmClear() {
         </ul>
       </div>
     </section>
-
-    <p v-else class="hint">登录后可导入导出数据。游客可正常记账、设置 API、使用语音。</p>
 
     <section class="panel danger">
       <h2>清空数据</h2>

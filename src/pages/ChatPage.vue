@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { nextTick, onMounted, ref } from 'vue'
+import { computed, nextTick, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import PageHeader from '@/components/layout/PageHeader.vue'
 import ActionBar from '@/components/layout/ActionBar.vue'
@@ -8,6 +8,7 @@ import { useToast } from '@/composables/useToast'
 import { useAppStore } from '@/stores/app.store'
 import { useUiStore } from '@/stores/ui.store'
 import { aiService, AiProviderError } from '@/services/ai.service'
+import { GUIDE_REWARD_POINTS } from '@/models'
 import type { AiConversation } from '@/models'
 
 interface ChatMessage {
@@ -29,8 +30,14 @@ const drawerOpen = ref(false)
 const sending = ref(false)
 const statusText = ref('')
 const configured = ref(false)
+const aiPoints = ref(0)
 const messagesEl = ref<HTMLElement | null>(null)
 const streamingId = ref<string | null>(null)
+
+const hasOwnKey = ref(false)
+const showPointsBanner = computed(
+  () => !hasOwnKey.value && aiPoints.value >= GUIDE_REWARD_POINTS,
+)
 
 const welcome: ChatMessage = {
   id: 'welcome',
@@ -55,9 +62,16 @@ async function loadConversation(id: string) {
   await scrollToBottom()
 }
 
+async function refreshAiStatus() {
+  const settings = await aiService.loadSettings()
+  hasOwnKey.value = Boolean(settings.apiKey.trim())
+  aiPoints.value = await aiService.getAiPoints()
+  configured.value = await aiService.getSettingsConfigured()
+}
+
 async function bootstrap() {
   await appStore.initialize()
-  configured.value = await aiService.getSettingsConfigured()
+  await refreshAiStatus()
   await loadConversations()
 
   if (conversations.value.length > 0) {
@@ -99,7 +113,7 @@ async function send(text: string) {
   if (!trimmed || sending.value) return
 
   if (!configured.value) {
-    toast.error('请先在设置中填写 API Key')
+    toast.error('请完成新手引导获取积分，或在设置中填写 API Key')
     router.push('/settings/ai')
     return
   }
@@ -143,6 +157,10 @@ async function send(text: string) {
     }
 
     if (result.mutated) uiStore.bumpData()
+    if (result.pointsConsumed) {
+      toast.success('AI 已帮你记一笔，体验积分已用完')
+      await refreshAiStatus()
+    }
     await loadConversations()
   } catch (e) {
     if (streamingId.value) {
@@ -197,7 +215,11 @@ async function send(text: string) {
       @delete="deleteConversation"
     />
 
-    <div v-if="!configured" class="banner">
+    <div v-if="showPointsBanner" class="banner points">
+      你有 {{ aiPoints }} 积分，可直接让 AI 帮你记一笔（仅可使用一次）
+    </div>
+
+    <div v-else-if="!configured" class="banner">
       尚未配置 API Key，
       <button type="button" @click="router.push('/settings/ai')">去设置</button>
     </div>
@@ -251,6 +273,10 @@ async function send(text: string) {
   background: var(--accent-soft);
   color: var(--brand-deep);
   font-size: 0.82rem;
+}
+
+.banner.points {
+  background: rgba(201, 162, 39, 0.16);
 }
 
 .banner button {

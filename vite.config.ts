@@ -16,7 +16,14 @@ export default defineConfig(({ mode }) => {
       emailDevPlugin(env),
       VitePWA({
         registerType: 'autoUpdate',
-        includeAssets: ['favicon.svg', 'icon-192.png', 'icon-512.png', 'apple-touch-icon.png', 'brand/cicada.png'],
+        includeAssets: [
+          'favicon.svg',
+          'icon-192.png',
+          'icon-512.png',
+          'apple-touch-icon.png',
+          'brand/cicada.png',
+          'videos/clean.mp4',
+        ],
         manifest: {
           name: '金蝉记账',
           short_name: '金蝉记账',
@@ -52,6 +59,7 @@ export default defineConfig(({ mode }) => {
         },
         workbox: {
           globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
+          globIgnores: ['**/videos/**'],
           navigateFallback: 'index.html',
           navigateFallbackDenylist: [/^\/docs/, /^\/api/],
           runtimeCaching: [

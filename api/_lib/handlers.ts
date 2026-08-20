@@ -11,6 +11,7 @@ import {
   generateVerificationCode,
   hashCode,
   normalizeEmail,
+  resolveTrialUserKey,
   userFolderId,
 } from './ids'
 import { deleteLocalPending, readLocalPending, writeLocalPending } from './local-pending'
@@ -181,14 +182,14 @@ export async function handleAiTrial(
   env: Record<string, string>,
   body: Record<string, unknown>,
   emailHeader: string,
+  userIdHeader = '',
 ): Promise<ApiResult> {
-  const email = normalizeEmail(String(body.email ?? emailHeader ?? ''))
-  if (!EMAIL_RE.test(email)) return json(400, { ok: false, error: '缺少登录邮箱' })
+  const userId = resolveTrialUserKey(body, emailHeader, userIdHeader)
+  if (!userId) return json(400, { ok: false, error: '缺少用户标识' })
 
   const apiKey = env.TRIAL_DEEPSEEK_API_KEY
   if (!apiKey) return json(403, { ok: false, error: '请先在设置中填写 API Key' })
 
-  const userId = userFolderId(email)
   const profile = await loadProfile(asEnv(env), userId)
   if (profile?.trialUsed || memoryTrialUsed.has(userId)) {
     return json(403, { ok: false, error: '免费体验已结束，请在设置中填写自己的 API Key' })
@@ -228,11 +229,11 @@ export async function handleAiTrial(
 export async function handleConsumeTrial(
   env: Record<string, string>,
   body: Record<string, unknown>,
+  userIdHeader = '',
 ): Promise<ApiResult> {
-  const email = normalizeEmail(String(body.email ?? ''))
-  if (!EMAIL_RE.test(email)) return json(400, { ok: false, error: '缺少登录邮箱' })
+  const userId = resolveTrialUserKey(body, '', userIdHeader)
+  if (!userId) return json(400, { ok: false, error: '缺少用户标识' })
 
-  const userId = userFolderId(email)
   memoryTrialUsed.add(userId)
   const profile = await loadProfile(asEnv(env), userId)
   if (!profile) return json(200, { ok: true })

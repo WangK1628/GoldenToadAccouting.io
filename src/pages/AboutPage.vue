@@ -40,8 +40,7 @@ async function logout() {
     <section class="card">
       <h3>产品简介</h3>
       <p>
-        本地优先的个人记账应用，视觉与交互参考
-        <a href="https://miaowa.sugarat.top/docs/" target="_blank" rel="noopener">妙蛙记账</a>。
+        本地优先的个人记账应用，视觉与交互参考妙蛙记账。
         数据保存在 IndexedDB，AI 使用自配 DeepSeek / OpenAI Compatible API。
       </p>
     </section>
@@ -51,7 +50,7 @@ async function logout() {
       <p>
         <a :href="AUTHOR.github" target="_blank" rel="noopener">@{{ AUTHOR.name }}</a>
       </p>
-      <p class="muted">GitHub 开源 · 独立实现，不依赖妙蛙服务端</p>
+      <p class="muted">GitHub 开源 · 独立实现，数据完全本地存储</p>
     </section>
 
     <section class="card">

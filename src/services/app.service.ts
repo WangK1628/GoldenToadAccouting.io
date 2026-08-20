@@ -1,4 +1,4 @@
-import { clearDemoTransactions, runMigrations } from '@/database/migrations'
+import { clearDemoTransactions, ensureDemoRecords, runMigrations } from '@/database/migrations'
 import {
   bookRepository,
   budgetRepository,
@@ -173,6 +173,13 @@ class AppService {
     if (started === '1') return
     await clearDemoTransactions()
     await settingsRepository.set(SETTING_KEYS.personalStarted, '1')
+  }
+
+  async ensureDemoPreview(): Promise<boolean> {
+    await this.initialize()
+    const started = await settingsRepository.get(SETTING_KEYS.personalStarted)
+    if (started === '1') return false
+    return ensureDemoRecords()
   }
 }
 

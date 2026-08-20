@@ -5,6 +5,7 @@ export const useUiStore = defineStore('ui', () => {
   const dataVersion = ref(0)
   const recordSheetOpen = ref(false)
   const editingTransactionId = ref<string | null>(null)
+  const cleanVideoOpen = ref(false)
 
   function bumpData() {
     dataVersion.value += 1
@@ -25,13 +26,24 @@ export const useUiStore = defineStore('ui', () => {
     editingTransactionId.value = null
   }
 
+  function playCleanVideo() {
+    cleanVideoOpen.value = true
+  }
+
+  function closeCleanVideo() {
+    cleanVideoOpen.value = false
+  }
+
   return {
     dataVersion,
     recordSheetOpen,
     editingTransactionId,
+    cleanVideoOpen,
     bumpData,
     openCreateRecord,
     openEditRecord,
     closeRecordSheet,
+    playCleanVideo,
+    closeCleanVideo,
   }
 })

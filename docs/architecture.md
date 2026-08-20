@@ -44,14 +44,14 @@ src/
 | `ai.service` | 对话、Tool Calling 循环、流式输出 |
 | `export.service` / `import.service` | 数据导入导出 |
 
-## 与目标产品差异
+## 产品定位
 
-| 维度 | 妙蛙记账 | 金蝉记账 |
-|------|----------|----------|
-| 数据 | 云端 API + 同步 | IndexedDB 本地优先 |
-| AI | 服务端 + 积分 | 用户自配 DeepSeek |
-| 认证 | 必须登录 | 无强制云端账号 |
-| 语音 | WebSocket ASR | Web Speech API |
+| 维度 | 金蝉记账 |
+|------|----------|
+| 数据 | IndexedDB 本地优先 |
+| AI | 用户自配 DeepSeek / 试用积分 |
+| 认证 | 游客 / 邮箱登录，无强制云端 |
+| 语音 | Web Speech API |
 
 ## 主题与体验
 

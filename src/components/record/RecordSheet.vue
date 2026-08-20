@@ -240,7 +240,7 @@ async function remove() {
         </div>
       </section>
 
-      <section class="section">
+      <section class="section" data-guide="record-category">
         <h3>分类</h3>
         <div class="chips">
           <button
@@ -270,7 +270,7 @@ async function remove() {
         </div>
       </section>
 
-      <section class="section meta-grid">
+      <section class="section meta-grid" data-guide="record-datetime">
         <label>
           <span>日期</span>
           <input v-model="form.date" type="date" />
@@ -282,9 +282,14 @@ async function remove() {
       </section>
 
       <section class="section">
-        <label class="field">
+        <label class="field" data-guide="record-note">
           <span>备注</span>
-          <input v-model="form.note" type="text" placeholder="可选" maxlength="120" />
+          <input
+            v-model="form.note"
+            type="text"
+            placeholder="可选"
+            maxlength="120"
+          />
         </label>
         <label class="field">
           <span>标签</span>
@@ -296,7 +301,9 @@ async function remove() {
         </label>
       </section>
 
-      <NumPad @input="onNumpadInput" @delete="onNumpadInput('del')" />
+      <div data-guide="record-amount">
+        <NumPad @input="onNumpadInput" @delete="onNumpadInput('del')" />
+      </div>
     </div>
 
     <template #footer>
@@ -310,7 +317,13 @@ async function remove() {
         >
           删除
         </button>
-        <button type="button" class="btn primary" :disabled="saving || loading" @click="submit">
+        <button
+          type="button"
+          class="btn primary"
+          data-guide="record-submit"
+          :disabled="saving || loading"
+          @click="submit"
+        >
           {{ saving ? '保存中…' : isEdit ? '保存' : '记一笔' }}
         </button>
       </div>

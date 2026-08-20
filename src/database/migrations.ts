@@ -61,55 +61,57 @@ export async function runMigrations(): Promise<void> {
   }
 }
 
-async function seedInitialData(): Promise<void> {
+export async function ensureDemoRecords(): Promise<boolean> {
+  await openDatabase()
+  const txCount = await db.transactions.count()
+  if (txCount > 0) return false
+
+  const book =
+    (await db.books.filter((row) => row.isDefault).first()) ??
+    (await db.books.toCollection().first())
+  if (!book) return false
+
+  const categories = await db.categories.where('bookId').equals(book.id).toArray()
+  if (categories.length === 0) return false
+
+  const catIds: Record<string, string> = {}
+  for (const cat of categories) {
+    catIds[cat.name] = cat.id
+    if (cat.parentId) {
+      const parent = categories.find((row) => row.id === cat.parentId)
+      if (parent) catIds[`${parent.name}.${cat.name}`] = cat.id
+    }
+  }
+
   const timestamp = nowIso()
-  const bookId = createId('book')
   const today = todayDateString()
   const yearMonth = today.slice(0, 7)
-
-  const book: Book = {
-    id: bookId,
-    ...DEFAULT_BOOK,
+  const demoRecords = buildDemoRecords(book.id, catIds, today, timestamp)
+  const budget: Budget = {
+    id: createId('budget'),
+    bookId: book.id,
+    yearMonth,
+    amount: 500000,
+    isDefault: false,
     createdAt: timestamp,
     updatedAt: timestamp,
   }
 
-  const categories: Category[] = []
-  const catIds: Record<string, string> = {}
+  await db.transaction('rw', db.transactions, db.budgets, async () => {
+    await db.transactions.bulkAdd(demoRecords)
+    const budgetCount = await db.budgets.where('bookId').equals(book.id).count()
+    if (budgetCount === 0) await db.budgets.add(budget)
+  })
+  return true
+}
 
-  for (const item of DEFAULT_CATEGORIES) {
-    const parentId = createId('cat')
-    catIds[item.name] = parentId
-    categories.push({
-      id: parentId,
-      bookId,
-      name: item.name,
-      type: item.type,
-      parentId: null,
-      sort: item.sort,
-      icon: item.icon,
-      createdAt: timestamp,
-      updatedAt: timestamp,
-    })
-
-    for (const child of item.children ?? []) {
-      const childId = createId('cat')
-      catIds[`${item.name}.${child.name}`] = childId
-      categories.push({
-        id: childId,
-        bookId,
-        name: child.name,
-        type: item.type,
-        parentId,
-        sort: child.sort,
-        icon: child.icon,
-        createdAt: timestamp,
-        updatedAt: timestamp,
-      })
-    }
-  }
-
-  const demoRecords: Transaction[] = [
+function buildDemoRecords(
+  bookId: string,
+  catIds: Record<string, string>,
+  today: string,
+  timestamp: string,
+): Transaction[] {
+  return [
     {
       id: createId('txn'),
       bookId,
@@ -175,6 +177,57 @@ async function seedInitialData(): Promise<void> {
       updatedAt: timestamp,
     },
   ]
+}
+
+async function seedInitialData(): Promise<void> {
+  const timestamp = nowIso()
+  const bookId = createId('book')
+  const today = todayDateString()
+  const yearMonth = today.slice(0, 7)
+
+  const book: Book = {
+    id: bookId,
+    ...DEFAULT_BOOK,
+    createdAt: timestamp,
+    updatedAt: timestamp,
+  }
+
+  const categories: Category[] = []
+  const catIds: Record<string, string> = {}
+
+  for (const item of DEFAULT_CATEGORIES) {
+    const parentId = createId('cat')
+    catIds[item.name] = parentId
+    categories.push({
+      id: parentId,
+      bookId,
+      name: item.name,
+      type: item.type,
+      parentId: null,
+      sort: item.sort,
+      icon: item.icon,
+      createdAt: timestamp,
+      updatedAt: timestamp,
+    })
+
+    for (const child of item.children ?? []) {
+      const childId = createId('cat')
+      catIds[`${item.name}.${child.name}`] = childId
+      categories.push({
+        id: childId,
+        bookId,
+        name: child.name,
+        type: item.type,
+        parentId,
+        sort: child.sort,
+        icon: child.icon,
+        createdAt: timestamp,
+        updatedAt: timestamp,
+      })
+    }
+  }
+
+  const demoRecords = buildDemoRecords(bookId, catIds, today, timestamp)
 
   const budget: Budget = {
     id: createId('budget'),

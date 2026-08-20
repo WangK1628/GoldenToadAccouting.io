@@ -21,6 +21,8 @@ export const useAuthStore = defineStore('auth', () => {
 
   async function enterGuest() {
     session.value = await authService.enterGuestMode()
+    const seeded = await appService.ensureDemoPreview()
+    if (seeded) useUiStore().bumpData()
   }
 
   async function register(email: string, password: string, code: string) {
@@ -48,7 +50,7 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   function canImportExport() {
-    return session.value?.mode === 'registered' || session.value?.mode === 'admin'
+    return Boolean(session.value)
   }
 
   return {

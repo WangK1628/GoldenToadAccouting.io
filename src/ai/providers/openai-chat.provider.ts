@@ -71,18 +71,17 @@ export function createChatProvider(settings: AiSettings): ChatProvider {
       request: ChatCompletionRequest,
       options?: ChatCompletionOptions,
     ): Promise<ChatCompletionResult> {
-      if (!settings.apiKey) {
-        if (!settings.trialEmail) {
-          throw new AiProviderError('未配置 API Key，请先在设置中填写')
-        }
+      if (!settings.apiKey && !settings.trialEmail && !settings.trialUserId) {
+        throw new AiProviderError('未配置 API Key，请先在设置中填写')
       }
 
-      const useTrial = Boolean(!settings.apiKey && settings.trialEmail)
+      const useTrial = Boolean(!settings.apiKey && (settings.trialEmail || settings.trialUserId))
       const useStream = !useTrial && Boolean(request.stream && options?.onToken)
       const url = useTrial ? '/api/ai-trial' : `${baseUrl}/v1/chat/completions`
       const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-      if (useTrial && settings.trialEmail) {
-        headers['X-User-Email'] = settings.trialEmail
+      if (useTrial) {
+        if (settings.trialEmail) headers['X-User-Email'] = settings.trialEmail
+        if (settings.trialUserId) headers['X-User-Id'] = settings.trialUserId
       } else if (settings.apiKey) {
         headers.Authorization = `Bearer ${settings.apiKey}`
       }
@@ -93,6 +92,7 @@ export function createChatProvider(settings: AiSettings): ChatProvider {
         body: JSON.stringify({
           ...buildRequestBody(settings, { ...request, stream: useStream }),
           email: settings.trialEmail,
+          userId: settings.trialUserId,
         }),
       })
 

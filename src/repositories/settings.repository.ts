@@ -1,5 +1,5 @@
 import type { AiConversation, AiMessage, AiSettings, ThemeMode } from '@/models'
-import { SETTING_KEYS } from '@/models'
+import { GUIDE_REWARD_POINTS, SETTING_KEYS } from '@/models'
 import { BaseRepository } from '@/repositories/base.repository'
 import { createId } from '@/utils/id'
 import { nowIso } from '@/utils/time'
@@ -68,7 +68,30 @@ export class SettingsRepository extends BaseRepository {
     }
   }
 
+  async getAiPoints(): Promise<number> {
+    const raw = await this.get(SETTING_KEYS.aiPoints)
+    if (!raw) return 0
+    const value = Number.parseInt(raw, 10)
+    return Number.isFinite(value) && value > 0 ? value : 0
+  }
+
+  async setAiPoints(points: number): Promise<void> {
+    const safe = Math.max(0, Math.floor(points))
+    await this.set(SETTING_KEYS.aiPoints, String(safe))
+    await this.setAiTrialAvailable(safe >= GUIDE_REWARD_POINTS)
+  }
+
+  async grantGuideRewardPoints(): Promise<void> {
+    await this.setAiPoints(GUIDE_REWARD_POINTS)
+  }
+
+  async consumeAiPoints(): Promise<void> {
+    await this.setAiPoints(0)
+  }
+
   async isAiTrialAvailable(): Promise<boolean> {
+    const points = await this.getAiPoints()
+    if (points >= GUIDE_REWARD_POINTS) return true
     return (await this.get(SETTING_KEYS.aiTrial)) === '1'
   }
 

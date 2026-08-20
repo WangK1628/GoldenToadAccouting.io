@@ -13,3 +13,4 @@ data/users/*
 *.tsbuildinfo
 *.apk
 *.aab
+src/mp4/

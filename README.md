@@ -3,7 +3,7 @@
 [![CI](https://github.com/WangK1628/GoldenToadAccouting.io/actions/workflows/ci.yml/badge.svg)](https://github.com/WangK1628/GoldenToadAccouting.io/actions/workflows/ci.yml)
 [![Pages](https://github.com/WangK1628/GoldenToadAccouting.io/actions/workflows/deploy-pages.yml/badge.svg)](https://github.com/WangK1628/GoldenToadAccouting.io/actions/workflows/deploy-pages.yml)
 
-> 一句话，记清花销 — 本地优先的个人记账 PWA，视觉与交互参考 [妙蛙记账]。
+> 一句话，记清花销 — 本地优先的个人记账 PWA，视觉与交互参考妙蛙记账。
 
 - **在线体验**：[网页版](https://wangk1628.github.io/GoldenToadAccouting.io/)
 - **产品介绍**：[docs 首页](https://wangk1628.github.io/GoldenToadAccouting.io/docs/)
@@ -78,4 +78,4 @@ API Key 仅加密存储在本地 IndexedDB。
 
 ## 致谢
 
-UI/交互灵感来自 [妙蛙记账]。本项目为独立实现，不调用服务端，数据完全本地存储。
+本项目为独立实现，数据完全本地存储。UI/交互视觉参考妙蛙记账。

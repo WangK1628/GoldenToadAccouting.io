@@ -92,6 +92,12 @@ const router = createRouter({
       meta: { title: '账本' },
     },
     {
+      path: '/profile',
+      name: 'profile',
+      component: () => import('@/pages/ProfilePage.vue'),
+      meta: { title: '个人中心' },
+    },
+    {
       path: '/about',
       name: 'about',
       component: () => import('@/pages/AboutPage.vue'),
