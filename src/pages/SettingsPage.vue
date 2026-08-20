@@ -133,9 +133,9 @@ function navigate(path?: string) {
   gap: 0.75rem;
   padding: 0.82rem 0.85rem;
   border: none;
-  border-radius: 12px;
+  border-radius: 18px;
   background: var(--panel);
-  border: 1px solid var(--line);
+  box-shadow: var(--shadow);
   color: var(--ink);
   text-align: left;
   cursor: pointer;

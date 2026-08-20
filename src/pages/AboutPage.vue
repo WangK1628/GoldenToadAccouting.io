@@ -5,6 +5,7 @@ import PageHeader from '@/components/layout/PageHeader.vue'
 import { APP, AUTHOR } from '@/constants/author'
 import { useAuthStore } from '@/stores/auth.store'
 import { useToast } from '@/composables/useToast'
+import Mascot from '@/components/common/Mascot.vue'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -28,7 +29,7 @@ async function logout() {
     <PageHeader title="关于" />
 
     <section class="hero">
-      <img src="/favicon.svg" alt="" width="72" height="72" class="logo" />
+      <Mascot :size="84" />
       <h2>{{ APP.name }}</h2>
       <p class="en">{{ APP.nameEn }}</p>
       <p class="slogan">{{ APP.slogan }}</p>
@@ -72,9 +73,8 @@ async function logout() {
   margin-bottom: 1rem;
 }
 
-.logo {
-  border-radius: 18px;
-  filter: drop-shadow(0 4px 10px rgba(168, 132, 26, 0.18));
+.hero :deep(.mascot) {
+  margin: 0 auto;
 }
 
 .hero h2 {
@@ -102,10 +102,11 @@ async function logout() {
 
 .card {
   margin-bottom: 0.75rem;
-  padding: 0.9rem;
-  border-radius: 14px;
+  padding: 0.95rem 1rem;
+  border-radius: 18px;
   background: var(--panel);
-  border: 1px solid var(--line);
+  border: none;
+  box-shadow: var(--shadow);
 }
 
 .card h3 {

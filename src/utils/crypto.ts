@@ -37,7 +37,3 @@ export async function createPasswordHash(password: string): Promise<{ hash: stri
   const hash = await hashPassword(password, salt)
   return { hash, salt }
 }
-
-export function generateVerificationCode(): string {
-  return String(Math.floor(100_000 + Math.random() * 900_000))
-}

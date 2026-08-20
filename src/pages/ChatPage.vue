@@ -99,7 +99,7 @@ async function send(text: string) {
   if (!trimmed || sending.value) return
 
   if (!configured.value) {
-    toast.error('请先在设置中配置 API Key')
+    toast.error('请先配置自己的 API Key，或使用注册赠送的一次体验')
     router.push('/settings/ai')
     return
   }

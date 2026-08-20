@@ -32,7 +32,11 @@ const bars = computed(() =>
 
 <style scoped>
 .week-chart {
-  margin-top: 0.35rem;
+  margin-top: 0.2rem;
+  padding: 0.9rem 0.7rem 0.7rem;
+  border-radius: 20px;
+  background: var(--panel);
+  box-shadow: var(--shadow);
 }
 
 .bars {

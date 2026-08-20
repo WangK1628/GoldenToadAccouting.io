@@ -60,11 +60,11 @@ function navigate(path: string) {
   flex-direction: column;
   gap: 0.15rem;
   min-width: 8.5rem;
-  padding: 0.45rem;
-  border-radius: 14px;
+  padding: 0.52rem;
+  border-radius: 18px;
   background: var(--panel);
-  border: 1px solid var(--line);
-  box-shadow: 0 10px 30px #2c241614;
+  border: none;
+  box-shadow: var(--shadow);
 }
 
 .side-menu button {

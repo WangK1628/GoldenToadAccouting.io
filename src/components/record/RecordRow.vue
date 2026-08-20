@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { TransactionType } from '@/models'
-import { formatSignedAmount } from '@/utils/money'
+import { centsToYuanString } from '@/utils/money'
 
 defineProps<{
   icon?: string
@@ -17,12 +17,12 @@ defineProps<{
     <div class="icon" aria-hidden="true">{{ icon ?? '·' }}</div>
     <div class="main">
       <div class="title">{{ categoryLabel }}</div>
-      <div v-if="note" class="note">{{ note }}</div>
+      <div class="meta">
+        <span v-if="note" class="note">{{ note }}</span>
+        <span v-if="time" class="time">{{ time }}</span>
+      </div>
     </div>
-    <div class="side">
-      <div class="amount" :class="type">{{ formatSignedAmount(type, amount) }}</div>
-      <div v-if="time" class="time">{{ time }}</div>
-    </div>
+    <div class="amount" :class="type">{{ centsToYuanString(amount) }}</div>
   </article>
 </template>
 
@@ -30,19 +30,19 @@ defineProps<{
 .record-row {
   display: grid;
   grid-template-columns: auto 1fr auto;
-  gap: 0.65rem;
-  align-items: start;
-  padding: 0.72rem 0;
+  gap: 0.7rem;
+  align-items: center;
+  padding: 0.78rem 0;
   border-bottom: 1px solid var(--line);
 }
 
 .icon {
-  width: 2rem;
-  height: 2rem;
+  width: 2.15rem;
+  height: 2.15rem;
   display: grid;
   place-items: center;
   border-radius: 10px;
-  background: var(--cream);
+  background: #f6f1e4;
   font-size: 1.05rem;
 }
 
@@ -52,39 +52,38 @@ defineProps<{
 
 .title {
   font-size: 0.92rem;
-  font-weight: 500;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.meta {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin-top: 0.12rem;
+  min-width: 0;
+}
+
+.note,
+.time {
+  font-size: 0.74rem;
+  color: var(--muted);
 }
 
 .note {
-  margin-top: 0.15rem;
-  font-size: 0.78rem;
-  color: var(--muted);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.side {
-  text-align: right;
-}
-
 .amount {
-  font-size: 1.05rem;
-  font-weight: 600;
+  font-size: 0.98rem;
+  font-weight: 650;
   font-variant-numeric: tabular-nums;
-}
-
-.amount.expense {
-  color: var(--expense);
+  color: var(--brand-deep);
 }
 
 .amount.income {
   color: var(--income);
-}
-
-.time {
-  margin-top: 0.15rem;
-  font-size: 0.72rem;
-  color: var(--muted-2);
 }
 </style>

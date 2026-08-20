@@ -5,6 +5,7 @@ import { APP, AUTHOR } from '@/constants/author'
 import { authService } from '@/services/auth.service'
 import { useAuthStore } from '@/stores/auth.store'
 import { useToast } from '@/composables/useToast'
+import Mascot from '@/components/common/Mascot.vue'
 
 type LoginTab = 'code' | 'password'
 
@@ -18,7 +19,6 @@ const code = ref('')
 const password = ref('')
 const loading = ref(false)
 const codeCooldown = ref(0)
-const lastCode = ref('')
 
 let cooldownTimer: ReturnType<typeof setInterval> | null = null
 
@@ -37,10 +37,8 @@ function startCooldown(seconds = 60) {
 async function sendCode() {
   if (codeCooldown.value > 0) return
   try {
-    const generated = authService.requestVerificationCode(email.value)
-    lastCode.value = generated
-    code.value = generated
-    toast.success(`验证码已填入：${generated}`)
+    const result = await authService.sendVerificationCode(email.value, 'login')
+    toast.success(result.message)
     startCooldown()
   } catch (error) {
     toast.error(error instanceof Error ? error.message : '发送失败')
@@ -75,7 +73,7 @@ async function skipLogin() {
 <template>
   <div class="login-page">
     <header class="brand">
-      <img src="/favicon.svg" alt="" width="56" height="56" class="logo" />
+      <Mascot :size="88" />
       <h1>{{ APP.name }}</h1>
       <p class="slogan">{{ APP.slogan }}</p>
       <p class="features">{{ APP.tagline }}</p>
@@ -119,11 +117,6 @@ async function skipLogin() {
           />
         </label>
 
-        <p class="hint">
-          未注册将自动注册。本地版无邮件服务，验证码会直接填入输入框。
-        </p>
-        <p v-if="lastCode" class="code-hint">本次验证码：{{ lastCode }}</p>
-
         <button type="submit" class="primary" :disabled="loading">
           {{ loading ? '登录中…' : '登录 / 注册' }}
         </button>
@@ -146,48 +139,48 @@ async function skipLogin() {
 <style scoped>
 .login-page {
   min-height: var(--app-height);
-  padding: calc(1.25rem + var(--safe-top)) 1rem calc(1.5rem + var(--safe-bottom));
+  padding: calc(1.6rem + var(--safe-top)) 1.15rem calc(1.5rem + var(--safe-bottom));
   background:
-    radial-gradient(ellipse 120% 60% at 50% -10%, var(--accent-soft) 0%, transparent 55%),
-    linear-gradient(180deg, var(--bg1) 0%, var(--bg0) 100%);
+    radial-gradient(ellipse 90% 42% at 50% -6%, var(--accent-soft) 0%, transparent 58%),
+    var(--bg0);
 }
 
 .brand {
   text-align: center;
-  margin-bottom: 1.25rem;
+  margin-bottom: 1.5rem;
 }
 
-.logo {
-  border-radius: 14px;
-  filter: drop-shadow(0 4px 10px rgba(168, 132, 26, 0.18));
+.brand :deep(.mascot) {
+  margin: 0 auto;
 }
 
 .brand h1 {
-  margin: 0.65rem 0 0;
-  font-size: 1.35rem;
+  margin: 0.7rem 0 0;
+  font-size: 1.45rem;
+  font-weight: 700;
   color: var(--brand-deep);
 }
 
 .slogan {
-  margin: 0.35rem 0 0;
-  font-size: 0.88rem;
+  margin: 0.4rem 0 0;
+  font-size: 0.95rem;
   color: var(--muted);
 }
 
 .features {
-  margin: 0.25rem 0 0;
-  font-size: 0.72rem;
+  margin: 0.3rem 0 0;
+  font-size: 0.75rem;
   color: var(--muted-2);
 }
 
 .card {
   max-width: var(--app-max);
   margin: 0 auto;
-  padding: 1.1rem 1rem 1rem;
-  border-radius: 18px;
+  padding: 1.25rem 1.05rem 1.1rem;
+  border-radius: 24px;
   background: var(--panel);
-  border: 1px solid var(--line);
-  box-shadow: 0 8px 28px #2c241610;
+  border: none;
+  box-shadow: var(--shadow);
 }
 
 .card h2 {
@@ -274,28 +267,21 @@ async function skipLogin() {
 }
 
 .hint {
-  margin: 0 0 0.45rem;
+  margin: 0 0 0.85rem;
   font-size: 0.72rem;
   color: var(--muted-2);
   line-height: 1.45;
-}
-
-.code-hint {
-  margin: 0 0 0.85rem;
-  font-size: 0.82rem;
-  color: var(--brand-deep);
-  font-weight: 600;
 }
 
 .primary {
   width: 100%;
   border: none;
   border-radius: 999px;
-  padding: 0.82rem;
-  background: linear-gradient(180deg, var(--gold) 0%, var(--brand-deep) 100%);
+  padding: 0.88rem;
+  background: var(--brand);
   color: #fff;
-  font-size: 0.95rem;
-  font-weight: 600;
+  font-size: 0.96rem;
+  font-weight: 650;
   cursor: pointer;
 }
 

@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import PageHeader from '@/components/layout/PageHeader.vue'
 import { APP, AUTHOR } from '@/constants/author'
+import Mascot from '@/components/common/Mascot.vue'
 
 const releaseUrl = computed(
   () => `${AUTHOR.repo}/releases/latest/download/golden-toad-accounting.apk`,
@@ -13,7 +14,7 @@ const releaseUrl = computed(
     <PageHeader title="下载与发布" />
 
     <section class="hero">
-      <img src="/favicon.svg" alt="" width="64" height="64" class="logo" />
+      <Mascot :size="76" />
       <h2>{{ APP.name }}</h2>
       <p class="version">v{{ APP.version }}</p>
       <p class="desc">{{ APP.slogan }}</p>
@@ -55,8 +56,8 @@ const releaseUrl = computed(
   margin-bottom: 1rem;
 }
 
-.logo {
-  border-radius: 16px;
+.hero :deep(.mascot) {
+  margin: 0 auto;
 }
 
 .hero h2 {
@@ -78,10 +79,11 @@ const releaseUrl = computed(
 
 .card {
   margin-bottom: 0.75rem;
-  padding: 0.9rem;
-  border-radius: 14px;
+  padding: 0.95rem 1rem;
+  border-radius: 18px;
   background: var(--panel);
-  border: 1px solid var(--line);
+  border: none;
+  box-shadow: var(--shadow);
 }
 
 .card h3 {

@@ -5,6 +5,8 @@ interface ImportMetaEnv {
   readonly VITE_DEFAULT_AI_BASE_URL: string
   readonly VITE_DEFAULT_AI_MODEL: string
   readonly VITE_DEFAULT_AI_PROVIDER: string
+  readonly VITE_EMAIL_ENABLED: string
+  readonly VITE_EMAIL_API_URL: string
 }
 
 interface ImportMeta {

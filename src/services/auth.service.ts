@@ -1,16 +1,19 @@
 import { settingsRepository, userRepository } from '@/repositories'
-import { createPasswordHash, generateVerificationCode, hashPassword } from '@/utils/crypto'
+import { createPasswordHash, hashPassword } from '@/utils/crypto'
+import { isValidEmail, normalizeEmail } from '@/utils/email'
 import { SETTING_KEYS, type AuthMode, type AuthSession } from '@/models'
 
-const CODE_TTL_MS = 5 * 60 * 1000
-
-interface PendingCode {
-  code: string
-  expiresAt: number
+export interface SendCodeResult {
+  sent: boolean
+  message: string
 }
 
+type CodePurpose = 'login' | 'register' | 'reset'
+
 class AuthService {
-  private pendingCodes = new Map<string, PendingCode>()
+  emailEnabled(): boolean {
+    return import.meta.env.VITE_EMAIL_ENABLED === 'true'
+  }
 
   async getSession(): Promise<AuthSession | null> {
     const raw = await settingsRepository.get(SETTING_KEYS.authSession)
@@ -41,13 +44,72 @@ class AuthService {
     return session
   }
 
-  async register(email: string, password: string): Promise<AuthSession> {
-    const normalized = email.trim().toLowerCase()
-    if (!normalized.includes('@')) throw new Error('请输入有效邮箱')
+  private sessionFromUser(user: { id: string; email: string; displayName: string }): AuthSession {
+    return {
+      mode: 'registered',
+      userId: user.id,
+      email: user.email,
+      displayName: user.displayName,
+    }
+  }
+
+  private apiUrl(path: string): string {
+    const root = (import.meta.env.VITE_EMAIL_API_URL || '/api/send-code').replace(/\/send-code$/, '')
+    return `${root}${path}`
+  }
+
+  private async postApi(path: string, body: Record<string, unknown>): Promise<Record<string, unknown>> {
+    const response = await fetch(this.apiUrl(path), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    })
+    const payload = (await response.json().catch(() => null)) as Record<string, unknown> | null
+    if (!response.ok || payload?.ok === false) {
+      throw new Error(String(payload?.error || '服务请求失败'))
+    }
+    return payload ?? {}
+  }
+
+  async sendVerificationCode(
+    email: string,
+    purpose: CodePurpose = 'login',
+  ): Promise<SendCodeResult> {
+    const normalized = normalizeEmail(email)
+    if (!isValidEmail(normalized)) throw new Error('请输入有效邮箱')
+    if (!this.emailEnabled()) {
+      throw new Error('验证码发送失败，请稍后重试')
+    }
+
+    const payload = await this.postApi('/send-code', { email: normalized, purpose })
+    return {
+      sent: true,
+      message: String(payload.message || '验证码已发送，请查收邮箱'),
+    }
+  }
+
+  private async verifyRemote(
+    email: string,
+    code: string,
+    purpose: CodePurpose,
+  ): Promise<boolean> {
+    const payload = await this.postApi('/verify-code', { email, code, purpose })
+    const trialGranted = payload.trialGranted === true
+    if (purpose !== 'reset') {
+      await settingsRepository.setAiTrialAvailable(trialGranted)
+    }
+    return trialGranted
+  }
+
+  async register(email: string, password: string, code: string): Promise<AuthSession> {
+    const normalized = normalizeEmail(email)
+    if (!isValidEmail(normalized)) throw new Error('请输入有效邮箱')
     if (password.length < 6) throw new Error('密码至少 6 位')
 
     const existing = await userRepository.getByEmail(normalized)
     if (existing) throw new Error('该邮箱已注册，请直接登录')
+
+    await this.verifyRemote(normalized, code, 'register')
 
     const { hash, salt } = await createPasswordHash(password)
     const user = await userRepository.create({
@@ -57,52 +119,32 @@ class AuthService {
       salt,
     })
 
-    const session: AuthSession = {
-      mode: 'registered',
-      userId: user.id,
-      email: user.email,
-      displayName: user.displayName,
-    }
+    const session = this.sessionFromUser(user)
     await this.saveSession(session)
     return session
   }
 
   async loginWithPassword(email: string, password: string): Promise<AuthSession> {
-    const normalized = email.trim().toLowerCase()
+    const normalized = normalizeEmail(email)
+    if (!isValidEmail(normalized)) throw new Error('请输入有效邮箱')
     const user = await userRepository.getByEmail(normalized)
     if (!user) throw new Error('账号不存在，请先注册')
     const hash = await hashPassword(password, user.salt)
     if (hash !== user.passwordHash) throw new Error('密码错误')
 
-    const session: AuthSession = {
-      mode: 'registered',
-      userId: user.id,
-      email: user.email,
-      displayName: user.displayName,
-    }
+    const session = this.sessionFromUser(user)
     await this.saveSession(session)
     return session
   }
 
-  requestVerificationCode(email: string): string {
-    const normalized = email.trim().toLowerCase()
-    if (!normalized.includes('@')) throw new Error('请输入有效邮箱')
-    const code = generateVerificationCode()
-    this.pendingCodes.set(normalized, { code, expiresAt: Date.now() + CODE_TTL_MS })
-    return code
-  }
-
   async loginWithCode(email: string, code: string): Promise<AuthSession> {
-    const normalized = email.trim().toLowerCase()
-    const pending = this.pendingCodes.get(normalized)
-    if (!pending || pending.expiresAt < Date.now()) throw new Error('验证码已过期，请重新获取')
-    if (pending.code !== code.trim()) throw new Error('验证码错误')
-
-    this.pendingCodes.delete(normalized)
+    const normalized = normalizeEmail(email)
+    if (!isValidEmail(normalized)) throw new Error('请输入有效邮箱')
+    await this.verifyRemote(normalized, code, 'login')
 
     let user = await userRepository.getByEmail(normalized)
     if (!user) {
-      const { hash, salt } = await createPasswordHash(code)
+      const { hash, salt } = await createPasswordHash(crypto.randomUUID())
       user = await userRepository.create({
         email: normalized,
         displayName: normalized.split('@')[0] ?? '用户',
@@ -111,29 +153,21 @@ class AuthService {
       })
     }
 
-    const session: AuthSession = {
-      mode: 'registered',
-      userId: user.id,
-      email: user.email,
-      displayName: user.displayName,
-    }
+    const session = this.sessionFromUser(user)
     await this.saveSession(session)
     return session
   }
 
   async resetPassword(email: string, code: string, newPassword: string): Promise<void> {
-    const normalized = email.trim().toLowerCase()
-    const pending = this.pendingCodes.get(normalized)
-    if (!pending || pending.expiresAt < Date.now()) throw new Error('验证码已过期，请重新获取')
-    if (pending.code !== code.trim()) throw new Error('验证码错误')
+    const normalized = normalizeEmail(email)
     if (newPassword.length < 6) throw new Error('密码至少 6 位')
+    await this.verifyRemote(normalized, code, 'reset')
 
     const user = await userRepository.getByEmail(normalized)
     if (!user) throw new Error('账号不存在')
 
     const { hash, salt } = await createPasswordHash(newPassword)
     await userRepository.updatePassword(user.id, hash, salt)
-    this.pendingCodes.delete(normalized)
   }
 
   async logout(): Promise<void> {

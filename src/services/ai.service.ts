@@ -4,9 +4,10 @@ import { SYSTEM_PROMPT } from '@/ai/prompts/system'
 import { AI_TOOLS } from '@/ai/tools/definitions'
 import { toolStatusLabel } from '@/ai/tools/labels'
 import { buildBookContext, executeToolCall } from '@/ai/tools/executor'
-import type { AiConversation } from '@/models'
+import type { AiConversation, AiSettings } from '@/models'
 import { aiLogRepository, settingsRepository } from '@/repositories'
 import { appService } from '@/services/app.service'
+import { authService } from '@/services/auth.service'
 
 const MAX_TOOL_ROUNDS = 8
 
@@ -31,7 +32,8 @@ export interface SendMessageCallbacks {
 class AiService {
   async getSettingsConfigured(): Promise<boolean> {
     const settings = await settingsRepository.getAiSettings()
-    return Boolean(settings.apiKey.trim())
+    if (settings.apiKey.trim()) return true
+    return settingsRepository.isAiTrialAvailable()
   }
 
   async loadSettings() {
@@ -40,6 +42,30 @@ class AiService {
 
   async saveSettings(settings: Parameters<typeof settingsRepository.saveAiSettings>[0]) {
     await settingsRepository.saveAiSettings(settings)
+  }
+
+  private async resolveSettings(): Promise<AiSettings> {
+    const settings = await settingsRepository.getAiSettings()
+    if (settings.apiKey.trim()) return settings
+    const trial = await settingsRepository.isAiTrialAvailable()
+    if (!trial) return settings
+    const session = await authService.getSession()
+    if (session?.mode !== 'registered' || !session.email) return settings
+    return { ...settings, trialEmail: session.email }
+  }
+
+  private async finishTrial(email: string | undefined, usedTrial: boolean): Promise<void> {
+    if (!usedTrial || !email) return
+    await settingsRepository.setAiTrialAvailable(false)
+    try {
+      await fetch('/api/consume-trial', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      })
+    } catch {
+      // 本地试用已清除，远端标记失败不影响继续使用自己的 Key
+    }
   }
 
   async listConversations(): Promise<AiConversation[]> {
@@ -76,9 +102,10 @@ class AiService {
 
     await appService.initialize()
     const book = await appService.getCurrentBook()
-    const settings = await settingsRepository.getAiSettings()
+    const settings = await this.resolveSettings()
+    const usedTrial = !settings.apiKey.trim()
 
-    if (!settings.apiKey.trim()) {
+    if (!settings.apiKey.trim() && !settings.trialEmail) {
       throw new AiProviderError('请先在设置中配置 AI API Key')
     }
 
@@ -164,6 +191,7 @@ class AiService {
         content: reply,
       })
 
+      await this.finishTrial(settings.trialEmail, usedTrial)
       return { conversationId: convId, reply, mutated }
     }
 
@@ -173,6 +201,7 @@ class AiService {
       role: 'assistant',
       content: fallback,
     })
+    await this.finishTrial(settings.trialEmail, usedTrial)
     return { conversationId: convId, reply: fallback, mutated }
   }
 }

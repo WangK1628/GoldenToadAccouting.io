@@ -10,7 +10,8 @@ import { AiProviderError } from '@/ai/providers/types'
 import { readSseJson } from '@/ai/providers/sse'
 
 interface StreamChoicePayload {
-  error?: { message?: string }
+  error?: { message?: string } | string
+  ok?: boolean
   choices?: Array<{
     finish_reason?: string | null
     delta?: {
@@ -28,6 +29,14 @@ interface StreamChoicePayload {
       tool_calls?: ToolCall[]
     }
   }>
+}
+
+function readProviderError(payload: StreamChoicePayload, status: number): string {
+  if (typeof payload.error === 'string' && payload.error.trim()) return payload.error
+  if (payload.error && typeof payload.error === 'object' && payload.error.message) {
+    return payload.error.message
+  }
+  return `请求失败 (${status})`
 }
 
 function buildRequestBody(settings: AiSettings, request: ChatCompletionRequest) {
@@ -63,26 +72,34 @@ export function createChatProvider(settings: AiSettings): ChatProvider {
       options?: ChatCompletionOptions,
     ): Promise<ChatCompletionResult> {
       if (!settings.apiKey) {
-        throw new AiProviderError('未配置 API Key，请先在设置中填写')
+        if (!settings.trialEmail) {
+          throw new AiProviderError('未配置 API Key，请先在设置中填写')
+        }
       }
 
-      const useStream = Boolean(request.stream && options?.onToken)
-      const response = await fetch(`${baseUrl}/v1/chat/completions`, {
+      const useTrial = Boolean(!settings.apiKey && settings.trialEmail)
+      const useStream = !useTrial && Boolean(request.stream && options?.onToken)
+      const url = useTrial ? '/api/ai-trial' : `${baseUrl}/v1/chat/completions`
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+      if (useTrial && settings.trialEmail) {
+        headers['X-User-Email'] = settings.trialEmail
+      } else if (settings.apiKey) {
+        headers.Authorization = `Bearer ${settings.apiKey}`
+      }
+
+      const response = await fetch(url, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${settings.apiKey}`,
-        },
-        body: JSON.stringify(buildRequestBody(settings, { ...request, stream: useStream })),
+        headers,
+        body: JSON.stringify({
+          ...buildRequestBody(settings, { ...request, stream: useStream }),
+          email: settings.trialEmail,
+        }),
       })
 
       if (!useStream) {
         const payload = (await response.json()) as StreamChoicePayload
         if (!response.ok) {
-          throw new AiProviderError(
-            payload.error?.message ?? `请求失败 (${response.status})`,
-            response.status,
-          )
+          throw new AiProviderError(readProviderError(payload, response.status), response.status)
         }
         const choice = payload.choices?.[0]
         if (!choice?.message) throw new AiProviderError('模型返回为空')
@@ -100,7 +117,7 @@ export function createChatProvider(settings: AiSettings): ChatProvider {
         let message = `请求失败 (${response.status})`
         try {
           const payload = (await response.json()) as StreamChoicePayload
-          message = payload.error?.message ?? message
+          message = readProviderError(payload, response.status)
         } catch {
           // ignore
         }

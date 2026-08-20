@@ -119,6 +119,7 @@ export interface AiSettings {
   apiKey: string
   model: string
   temperature: number
+  trialEmail?: string
 }
 
 export const SETTING_KEYS = {
@@ -130,4 +131,5 @@ export const SETTING_KEYS = {
   aiApiKeyEnc: 'ai.apiKey.enc',
   aiModel: 'ai.model',
   aiTemperature: 'ai.temperature',
+  aiTrial: 'ai.trial',
 } as const

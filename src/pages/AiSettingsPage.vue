@@ -97,7 +97,7 @@ function goChat() {
           autocomplete="off"
           placeholder="仅保存在本地，不会上传"
         />
-        <span class="hint">密钥加密存储在 IndexedDB，不会进入 Git 或日志</span>
+        <span class="hint">密钥只保存在这台设备上。</span>
       </label>
 
       <label>

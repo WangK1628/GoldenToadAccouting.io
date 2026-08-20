@@ -64,7 +64,16 @@ export class SettingsRepository extends BaseRepository {
     await this.set(SETTING_KEYS.aiTemperature, String(settings.temperature))
     if (settings.apiKey) {
       await this.set(SETTING_KEYS.aiApiKeyEnc, await encryptApiKey(settings.apiKey))
+      await this.setAiTrialAvailable(false)
     }
+  }
+
+  async isAiTrialAvailable(): Promise<boolean> {
+    return (await this.get(SETTING_KEYS.aiTrial)) === '1'
+  }
+
+  async setAiTrialAvailable(enabled: boolean): Promise<void> {
+    await this.set(SETTING_KEYS.aiTrial, enabled ? '1' : '0')
   }
 }
 

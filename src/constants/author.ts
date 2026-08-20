@@ -13,5 +13,5 @@ export const APP = {
   nameEn: 'Golden Toad Accounting',
   slogan: '语音记一笔，账单自己长出来',
   tagline: '支持语音记账 · 多账本分类清晰 · 本地优先',
-  version: '0.2.0',
+  version: '0.3.0',
 } as const

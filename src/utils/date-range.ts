@@ -31,6 +31,15 @@ function mondayOfWeek(date: string): string {
   return formatDateString(d)
 }
 
+export function datesOfWeek(anchor: string): string[] {
+  const from = mondayOfWeek(anchor)
+  return Array.from({ length: 7 }, (_, i) => addDays(from, i))
+}
+
+export function elapsedWeekDates(dates: string[], today: string): string[] {
+  return dates.filter((date) => date <= today).sort((a, b) => (a < b ? 1 : -1))
+}
+
 export function resolveDateRange(
   granularity: StatsGranularity,
   anchor: string,

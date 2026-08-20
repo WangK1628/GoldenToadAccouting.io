@@ -17,7 +17,7 @@ createProvider(settings)
 | Base URL | `https://api.deepseek.com` |
 | Model | `deepseek-chat` |
 | Temperature | `0.2` |
-| API Key | 用户填写，Base64 存 IndexedDB |
+| API Key | 用户自己填写。注册后服务端提供 **一次** 试用，用完清除 |
 
 ## Tool Calling
 

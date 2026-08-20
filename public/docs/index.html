@@ -6,7 +6,7 @@
     <meta name="description" content="金蝉记账 — 一句话，记清花销。本地优先，AI 语音记账。" />
     <meta name="theme-color" content="#C9A227" />
     <title>金蝉记账 · Golden Toad Accounting</title>
-    <link rel="icon" href="../favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href="../icon-192.png" type="image/png" />
     <style>
       :root {
         --bg0: #fbf8f0;
@@ -42,10 +42,12 @@
         padding: 1.5rem 0 2rem;
       }
       .hero img {
-        width: 80px;
-        height: 80px;
-        border-radius: 20px;
-        filter: drop-shadow(0 6px 16px rgba(168, 132, 26, 0.2));
+        width: 96px;
+        height: 96px;
+        border-radius: 28px;
+        object-fit: cover;
+        background: #fff9eb;
+        filter: drop-shadow(0 8px 18px rgba(168, 132, 26, 0.16));
       }
       .hero h1 {
         margin: 1rem 0 0.35rem;
@@ -112,10 +114,11 @@
         }
       }
       .card {
-        padding: 1rem;
-        border-radius: 14px;
+        padding: 1.1rem 1.05rem;
+        border-radius: 20px;
         background: var(--panel);
-        border: 1px solid var(--line);
+        border: none;
+        box-shadow: 0 10px 28px rgba(90, 70, 30, 0.06);
       }
       .card h3 {
         margin: 0 0 0.35rem;
@@ -158,7 +161,7 @@
   <body>
     <div class="wrap">
       <header class="hero">
-        <img src="../favicon.svg" alt="金蝉记账" />
+        <img src="../brand/cicada.png" alt="金蝉记账" />
         <h1>一句话，<br />记清花销</h1>
         <p class="lead">打字或语音说一句，支出或收入都能记上。自动完成归类。</p>
         <div class="actions">
@@ -169,7 +172,7 @@
       </header>
 
       <div class="preview">
-        <img src="../favicon.svg" alt="" width="72" height="72" />
+        <img src="../brand/cicada.png" alt="" width="72" height="72" />
         <p style="margin: 0.75rem 0 0.35rem; color: var(--brand-deep); font-weight: 700">金蝉记账</p>
         <p style="margin: 0 0 0.75rem; color: var(--muted); font-size: 0.88rem">
           语音记一笔，账单自己长出来

@@ -7,6 +7,8 @@ android/build
 android/local.properties
 *.local
 .env
+data/users/*
+!data/users/README.md
 .DS_Store
 *.tsbuildinfo
 *.apk

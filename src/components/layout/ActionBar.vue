@@ -212,7 +212,7 @@ function onVoiceCancel() {
             class="text-input"
             type="text"
             enterkeyhint="send"
-            placeholder="说一句话记账…"
+            placeholder="文字记录或按住语音记录"
             :disabled="disabled"
             @keydown.enter="submitText"
           />
@@ -223,7 +223,7 @@ function onVoiceCancel() {
             :disabled="disabled || !draft.trim()"
             @click="submitText"
           >
-            ↑
+            +
           </button>
         </template>
 
@@ -250,7 +250,7 @@ function onVoiceCancel() {
       aria-label="智能对话"
       @click="openChat"
     >
-      <img class="robot-mark" src="/favicon.svg" alt="" width="40" height="40" />
+      <img class="robot-mark" src="/brand/cicada.png" alt="" width="40" height="40" />
     </button>
 
     <p v-if="props.hint" class="hint">{{ props.hint }}</p>
@@ -296,14 +296,14 @@ function onVoiceCancel() {
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  width: 2.35rem;
-  height: 2.35rem;
+  width: 2.55rem;
+  height: 2.55rem;
   padding: 0;
   border: none;
   border-radius: 999px;
-  background: var(--accent);
+  background: var(--brand);
   color: #fff;
-  box-shadow: 0 4px 14px #2c24162e;
+  box-shadow: 0 6px 16px rgba(168, 132, 26, 0.28);
   cursor: pointer;
   transition: transform 0.15s ease;
 }
@@ -320,15 +320,15 @@ function onVoiceCancel() {
 }
 
 .pill {
-  min-height: 2.7rem;
+  min-height: 2.85rem;
   display: flex;
   align-items: center;
   gap: 0.35rem;
-  padding: 0.35rem 0.45rem 0.35rem 0.4rem;
+  padding: 0.32rem 0.4rem 0.32rem 0.35rem;
   border-radius: 999px;
-  background: var(--panel);
+  background: #fff;
   border: 1px solid var(--line);
-  box-shadow: 0 6px 18px #2c241612;
+  box-shadow: 0 8px 22px rgba(90, 70, 30, 0.08);
   transition:
     border-color 0.15s ease,
     box-shadow 0.15s ease;
@@ -381,12 +381,12 @@ function onVoiceCancel() {
 }
 
 .send-btn {
-  width: 2rem;
-  height: 2rem;
+  width: 1.85rem;
+  height: 1.85rem;
   border-radius: 999px;
-  background: var(--brand);
-  color: #fff;
-  font-size: 1rem;
+  background: transparent;
+  color: var(--brand-deep);
+  font-size: 1.15rem;
   line-height: 1;
   transition: opacity 0.15s ease;
 }
@@ -413,14 +413,13 @@ function onVoiceCancel() {
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  width: 2.7rem;
-  height: 2.7rem;
+  width: 2.55rem;
+  height: 2.55rem;
   padding: 0;
   border: none;
   border-radius: 999px;
-  background: var(--cream);
-  border: 1px solid var(--line);
-  box-shadow: 0 4px 12px #2c241614;
+  background: #fff;
+  box-shadow: 0 6px 16px rgba(90, 70, 30, 0.1);
   cursor: pointer;
   transition: transform 0.15s ease;
 }
@@ -430,7 +429,11 @@ function onVoiceCancel() {
 }
 
 .robot-mark {
+  width: 2.15rem;
+  height: 2.15rem;
+  object-fit: cover;
   border-radius: 999px;
+  background: #fff9eb;
 }
 
 .hint {

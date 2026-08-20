@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>使用指南 · 金蝉记账</title>
-    <link rel="icon" href="../favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href="../icon-192.png" type="image/png" />
     <style>
       body {
         margin: 0;
@@ -48,8 +48,10 @@
       <h2>1. 登录与游客模式</h2>
       <ul>
         <li>首次打开可选择<strong>登录 / 注册</strong>或<strong>稍后再说</strong>进入游客模式。</li>
-        <li>本地版验证码会直接显示在提示中（无邮件服务）。</li>
-        <li>所有数据保存在设备本地 IndexedDB，不会上传服务器。</li>
+        <li>验证码由服务器生成并发送到邮箱，页面不会显示验证码。</li>
+        <li>注册成功后会在仓库 <code>data/users/</code> 下新建该用户目录（GitHub 用户库）。</li>
+        <li>注册用户可免费体验一次 AI，用过后需在设置中填写自己的 API Key。</li>
+        <li>账单数据仍保存在设备本地 IndexedDB。</li>
       </ul>
 
       <h2>2. 手动记账</h2>

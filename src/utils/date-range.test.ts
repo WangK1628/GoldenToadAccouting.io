@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { addDays, resolveDateRange, shiftAnchor } from '@/utils/date-range'
+import { addDays, datesOfWeek, elapsedWeekDates, resolveDateRange, shiftAnchor } from '@/utils/date-range'
 
 describe('date-range', () => {
   it('resolves day range', () => {
@@ -24,6 +24,25 @@ describe('date-range', () => {
   it('shifts anchor by month', () => {
     expect(shiftAnchor('month', '2026-08-15', -1)).toBe('2026-07-15')
     expect(shiftAnchor('month', '2026-08-15', 1)).toBe('2026-09-15')
+  })
+
+  it('lists only this week up to today, newest first', () => {
+    const dates = datesOfWeek('2026-08-20')
+    expect(dates).toEqual([
+      '2026-08-17',
+      '2026-08-18',
+      '2026-08-19',
+      '2026-08-20',
+      '2026-08-21',
+      '2026-08-22',
+      '2026-08-23',
+    ])
+    expect(elapsedWeekDates(dates, '2026-08-20')).toEqual([
+      '2026-08-20',
+      '2026-08-19',
+      '2026-08-18',
+      '2026-08-17',
+    ])
   })
 
   it('adds days across month boundary', () => {

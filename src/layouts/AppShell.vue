@@ -100,9 +100,9 @@ async function applyPwaUpdate() {
 }
 
 .offline-banner {
-  background: var(--cream-deep);
-  color: var(--muted);
-  border-bottom: 1px solid var(--line);
+  background: #f6ecc8;
+  color: var(--brand-deep);
+  border-bottom: none;
 }
 
 .pwa-banner {

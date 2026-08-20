@@ -7,7 +7,9 @@ defineProps<{
 
 <template>
   <div class="empty">
-    <div class="illus" aria-hidden="true">◎</div>
+    <div class="illus" aria-hidden="true">
+      <img src="/brand/cicada.png" alt="" width="56" height="56" />
+    </div>
     <h3 v-if="title">{{ title }}</h3>
     <p v-if="description">{{ description }}</p>
     <slot />
@@ -26,15 +28,20 @@ defineProps<{
 }
 
 .illus {
-  width: 3rem;
-  height: 3rem;
+  width: 4.2rem;
+  height: 4.2rem;
   display: grid;
   place-items: center;
-  border-radius: 999px;
-  background: var(--cream);
-  color: var(--brand);
-  font-size: 1.4rem;
+  border-radius: 22px;
+  background: #fff9eb;
   margin-bottom: 0.65rem;
+  overflow: hidden;
+}
+
+.illus img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 h3 {

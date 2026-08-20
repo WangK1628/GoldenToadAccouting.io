@@ -31,8 +31,8 @@ function startCooldown(seconds = 60) {
 async function sendCode() {
   if (codeCooldown.value > 0) return
   try {
-    const generated = authService.requestVerificationCode(email.value)
-    toast.success(`验证码：${generated}（本地版直接显示）`)
+    const result = await authService.sendVerificationCode(email.value, 'reset')
+    toast.success(result.message)
     startCooldown()
   } catch (error) {
     toast.error(error instanceof Error ? error.message : '发送失败')

@@ -16,8 +16,8 @@ export const useAuthStore = defineStore('auth', () => {
     session.value = await authService.enterGuestMode()
   }
 
-  async function register(email: string, password: string) {
-    session.value = await authService.register(email, password)
+  async function register(email: string, password: string, code: string) {
+    session.value = await authService.register(email, password, code)
   }
 
   async function loginPassword(email: string, password: string) {

@@ -67,15 +67,39 @@ class AppService {
     return categoryRepository.listByBook(bookId)
   }
 
-  async listRecentTransactionsDisplay(
+  async listMonthTransactionsDisplay(
     bookId: string,
-    limit = 8,
+    yearMonth: string,
   ): Promise<TransactionDisplay[]> {
     await this.initialize()
     const categories = await categoryRepository.listByBook(bookId)
     const map = this.categoryMap(categories)
-    const rows = await transactionRepository.list({ bookId })
-    return rows.slice(0, limit).map((row) => mapTransactionDisplay(row, map))
+    const rows = await transactionRepository.list({
+      bookId,
+      dateFrom: `${yearMonth}-01`,
+      dateTo: `${yearMonth}-31`,
+    })
+    return rows
+      .filter((row) => yearMonthFromDate(row.date) === yearMonth)
+      .map((row) => mapTransactionDisplay(row, map))
+  }
+
+  async listRangeTransactionsDisplay(
+    bookId: string,
+    from: string,
+    to: string,
+  ): Promise<TransactionDisplay[]> {
+    await this.initialize()
+    const categories = await categoryRepository.listByBook(bookId)
+    const map = this.categoryMap(categories)
+    const rows = await transactionRepository.list({
+      bookId,
+      dateFrom: from,
+      dateTo: to,
+    })
+    return rows
+      .filter((row) => row.date >= from && row.date <= to)
+      .map((row) => mapTransactionDisplay(row, map))
   }
 
   async listRecentTransactions(bookId: string, limit = 20): Promise<Transaction[]> {

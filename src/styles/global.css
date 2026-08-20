@@ -58,7 +58,7 @@ a {
   overflow-x: hidden;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-  padding: calc(0.75rem + var(--safe-top)) 1rem calc(1.25rem + var(--safe-bottom));
+  padding: calc(0.35rem + var(--safe-top)) 0.9rem calc(1.2rem + var(--safe-bottom));
   background: var(--bg0);
 }
 

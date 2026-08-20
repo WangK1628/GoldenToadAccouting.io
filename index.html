@@ -2,8 +2,8 @@
 <html lang="zh-CN">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-    <link rel="apple-touch-icon" href="/favicon.svg" />
+    <link rel="icon" href="/icon-192.png" type="image/png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <meta name="theme-color" content="#C9A227" />
     <meta name="color-scheme" content="light dark" />
     <meta name="mobile-web-app-capable" content="yes" />
@@ -76,10 +76,12 @@
       }
       #app-boot .logo {
         display: block;
-        width: 72px;
-        height: 72px;
-        border-radius: 18px;
-        filter: drop-shadow(0 4px 10px rgba(168, 132, 26, 0.2));
+        width: 88px;
+        height: 88px;
+        border-radius: 28px;
+        object-fit: cover;
+        background: #fff9eb;
+        filter: drop-shadow(0 8px 18px rgba(168, 132, 26, 0.16));
       }
       #app-boot .name {
         margin: 0.85rem 0 0;
@@ -123,7 +125,7 @@
   </head>
   <body>
     <div id="app-boot" aria-busy="true" aria-label="加载中">
-      <img class="logo" src="/favicon.svg" alt="" width="72" height="72" />
+      <img class="logo" src="/brand/cicada.png" alt="" width="72" height="72" />
       <p class="name">金蝉记账</p>
       <p class="slogan">语音记一笔，账单自己长出来</p>
       <div class="bar" aria-hidden="true"><i></i></div>

@@ -1,7 +1,7 @@
 {
   "name": "golden-toad-accounting",
   "private": true,
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "金蝉记账 — 本地优先 AI 记账 PWA",
   "author": "WangK1628 (https://github.com/WangK1628)",
   "license": "MIT",
@@ -57,6 +57,7 @@
     "vite-plugin-pwa": "^1.0.2",
     "vitest": "^4.1.11",
     "vue-tsc": "^3.0.5",
-    "workbox-window": "^7.3.0"
+    "workbox-window": "^7.3.0",
+    "@vercel/node": "^5.3.24"
   }
 }
