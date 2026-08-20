@@ -7,7 +7,7 @@
 
 - **在线体验**：[网页版](https://wangk1628.github.io/GoldenToadAccouting.io/)
 - **产品介绍**：[docs 首页](https://wangk1628.github.io/GoldenToadAccouting.io/docs/)
-- **Android 下载**：[Releases](https://github.com/WangK1628/GoldenToadAccouting.io/releases)
+- **Android 下载**：[golden-toad-accounting.apk](https://github.com/WangK1628/GoldenToadAccouting.io/releases/latest/download/golden-toad-accounting.apk)
 
 ## 作者
 
