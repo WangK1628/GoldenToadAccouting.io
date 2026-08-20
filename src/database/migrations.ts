@@ -218,7 +218,21 @@ function offsetDate(base: string, days: number): string {
   return d.toISOString().slice(0, 10)
 }
 
-export async function isDatabaseInitialized(): Promise<boolean> {
+export async function clearDemoTransactions(): Promise<void> {
   await openDatabase()
-  return (await db.books.count()) > 0
+  await db.transaction(
+    'rw',
+    db.transactions,
+    db.transactionTags,
+    db.budgets,
+    db.aiConversations,
+    db.aiMessages,
+    async () => {
+      await db.transactions.clear()
+      await db.transactionTags.clear()
+      await db.budgets.clear()
+      await db.aiMessages.clear()
+      await db.aiConversations.clear()
+    },
+  )
 }

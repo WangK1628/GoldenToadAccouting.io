@@ -1,4 +1,4 @@
-import { runMigrations } from '@/database/migrations'
+import { clearDemoTransactions, runMigrations } from '@/database/migrations'
 import {
   bookRepository,
   budgetRepository,
@@ -6,7 +6,7 @@ import {
   settingsRepository,
   transactionRepository,
 } from '@/repositories'
-import type { Book, Category, Transaction } from '@/models'
+import { SETTING_KEYS, type Book, type Category, type Transaction } from '@/models'
 import type { BudgetProgress, TransactionDisplay, WeekChartPoint } from '@/models/display'
 import { mapTransactionDisplay } from '@/models/display'
 import { sumCents } from '@/utils/money'
@@ -165,6 +165,14 @@ class AppService {
       pct,
       over: summary.expense > budget.amount,
     }
+  }
+
+  async startPersonalWorkspace(): Promise<void> {
+    await this.initialize()
+    const started = await settingsRepository.get(SETTING_KEYS.personalStarted)
+    if (started === '1') return
+    await clearDemoTransactions()
+    await settingsRepository.set(SETTING_KEYS.personalStarted, '1')
   }
 }
 

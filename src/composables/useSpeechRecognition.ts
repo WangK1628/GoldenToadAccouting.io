@@ -80,7 +80,7 @@ export function useSpeechRecognition() {
     return recognition
   }
 
-  function start() {
+  async function start(): Promise<boolean> {
     error.value = null
     interimText.value = ''
     finalText.value = ''
@@ -88,6 +88,15 @@ export function useSpeechRecognition() {
     if (!rec) {
       error.value = 'unsupported'
       return false
+    }
+    if (typeof navigator !== 'undefined' && navigator.mediaDevices?.getUserMedia) {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+        stream.getTracks().forEach((track) => track.stop())
+      } catch {
+        error.value = 'not-allowed'
+        return false
+      }
     }
     try {
       rec.start()

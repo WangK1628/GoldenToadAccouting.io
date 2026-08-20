@@ -14,6 +14,7 @@ const toast = useToast()
 const sessionLabel = computed(() => {
   if (!authStore.session) return '未登录'
   if (authStore.session.mode === 'guest') return '游客模式'
+  if (authStore.session.mode === 'admin') return '管理员'
   return authStore.session.email ?? authStore.session.displayName
 })
 

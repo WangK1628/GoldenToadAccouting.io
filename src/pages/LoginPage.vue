@@ -93,8 +93,13 @@ async function skipLogin() {
 
       <form class="form" @submit.prevent="submit">
         <label>
-          <span>邮箱</span>
-          <input v-model="email" type="email" placeholder="you@example.com" autocomplete="email" />
+          <span>{{ tab === 'password' ? '账号' : '邮箱' }}</span>
+          <input
+            v-model="email"
+            :type="tab === 'password' ? 'text' : 'email'"
+            :placeholder="tab === 'password' ? '邮箱或管理员账号' : 'you@example.com'"
+            autocomplete="username"
+          />
         </label>
 
         <label v-if="tab === 'code'">
@@ -112,22 +117,27 @@ async function skipLogin() {
           <input
             v-model="password"
             type="password"
-            placeholder="至少 6 位"
+            placeholder="密码"
             autocomplete="current-password"
           />
         </label>
 
         <button type="submit" class="primary" :disabled="loading">
-          {{ loading ? '登录中…' : '登录 / 注册' }}
+          {{ loading ? '登录中…' : tab === 'password' ? '本地登录' : '验证并登录' }}
         </button>
       </form>
+
+      <p v-if="tab === 'password'" class="hint">
+        邮箱 + 密码保存在本机。首次输入会自动创建账号，无需验证码。
+      </p>
+      <p v-else class="hint">验证码会发到你的邮箱，页面不会显示验证码。</p>
 
       <div class="links">
         <button type="button" @click="router.push('/register')">注册账号</button>
         <button type="button" @click="router.push('/forgot-password')">忘记密码</button>
       </div>
 
-      <button type="button" class="skip" @click="skipLogin">稍后再说</button>
+      <button type="button" class="skip" @click="skipLogin">游客进入，功能可直接用</button>
     </section>
 
     <footer class="footer">
@@ -289,6 +299,14 @@ async function skipLogin() {
   opacity: 0.65;
 }
 
+.hint {
+  margin: 0.7rem 0 0;
+  font-size: 0.72rem;
+  color: var(--muted-2);
+  line-height: 1.45;
+  text-align: center;
+}
+
 .links {
   display: flex;
   justify-content: center;
@@ -308,8 +326,15 @@ async function skipLogin() {
 .skip {
   display: block;
   width: 100%;
-  margin-top: 0.65rem;
-  color: var(--muted);
+  margin-top: 0.85rem;
+  padding: 0.75rem;
+  border: none;
+  border-radius: 999px;
+  background: var(--cream);
+  color: var(--brand-deep);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
 }
 
 .footer {

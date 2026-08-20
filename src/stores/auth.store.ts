@@ -1,11 +1,18 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { authService } from '@/services/auth.service'
+import { appService } from '@/services/app.service'
+import { useUiStore } from '@/stores/ui.store'
 import type { AuthSession } from '@/models'
 
 export const useAuthStore = defineStore('auth', () => {
   const session = ref<AuthSession | null>(null)
   const ready = ref(false)
+
+  async function afterPersonalLogin() {
+    await appService.startPersonalWorkspace()
+    useUiStore().bumpData()
+  }
 
   async function load() {
     session.value = await authService.getSession()
@@ -18,14 +25,17 @@ export const useAuthStore = defineStore('auth', () => {
 
   async function register(email: string, password: string, code: string) {
     session.value = await authService.register(email, password, code)
+    await afterPersonalLogin()
   }
 
   async function loginPassword(email: string, password: string) {
     session.value = await authService.loginWithPassword(email, password)
+    await afterPersonalLogin()
   }
 
   async function loginCode(email: string, code: string) {
     session.value = await authService.loginWithCode(email, code)
+    await afterPersonalLogin()
   }
 
   async function logout() {
@@ -35,6 +45,10 @@ export const useAuthStore = defineStore('auth', () => {
 
   function isAuthenticated() {
     return Boolean(session.value)
+  }
+
+  function canImportExport() {
+    return session.value?.mode === 'registered' || session.value?.mode === 'admin'
   }
 
   return {
@@ -47,5 +61,6 @@ export const useAuthStore = defineStore('auth', () => {
     loginCode,
     logout,
     isAuthenticated,
+    canImportExport,
   }
 })

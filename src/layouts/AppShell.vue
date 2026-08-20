@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import ActionBar from '@/components/layout/ActionBar.vue'
 import RecordSheet from '@/components/record/RecordSheet.vue'
 import ToastHost from '@/components/common/ToastHost.vue'
+import FeatureGuide from '@/components/onboarding/FeatureGuide.vue'
 import { useSafeArea, useAppHeight } from '@/composables/useSafeArea'
 import { useOnlineStatus } from '@/composables/useOnlineStatus'
 import { usePwaUpdate } from '@/composables/usePwaUpdate'
@@ -77,6 +78,7 @@ async function applyPwaUpdate() {
     />
 
     <RecordSheet />
+    <FeatureGuide />
     <ToastHost />
   </div>
 </template>

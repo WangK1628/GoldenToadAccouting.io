@@ -46,8 +46,9 @@ jobs:
           files: golden-toad-accounting.apk
           generate_release_notes: true
           body: |
-            金蝉记账 v0.3.0 Android 安装包。
+            金蝉记账 Android 安装包。
 
-            - 安装后可语音 / 打字记账
+            - 本地密码登录 / 邮箱验证码登录
+            - 交互式新手引导
+            - 设置页检查更新并安装 APK
             - 数据保存在手机本地
-            - 首次安装需允许「未知来源」

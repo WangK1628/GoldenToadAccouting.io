@@ -9,6 +9,7 @@ import Mascot from '@/components/common/Mascot.vue'
 import { useAppStore } from '@/stores/app.store'
 import { useAuthStore } from '@/stores/auth.store'
 import { useUiStore } from '@/stores/ui.store'
+import { useGuideStore } from '@/stores/guide.store'
 import { appService } from '@/services'
 import type { TransactionDisplay } from '@/models/display'
 import { centsToYuanString } from '@/utils/money'
@@ -35,6 +36,7 @@ const today = todayDateString()
 const weekDates = datesOfWeek(today)
 
 const router = useRouter()
+const guideStore = useGuideStore()
 const appStore = useAppStore()
 const authStore = useAuthStore()
 const uiStore = useUiStore()
@@ -113,6 +115,7 @@ watch(yearMonth, () => {
 
 function selectWeekday(index: number) {
   selectedWeekday.value = index
+  guideStore.notify('weekdays')
   const date = weekDates[index]
   if (!date || date > today) return
   void nextTick(() => {
@@ -140,7 +143,13 @@ function openLedgers() {
 }
 
 function goLogin() {
+  guideStore.notify('settings')
   router.push('/login')
+}
+
+function openSettings() {
+  guideStore.notify('settings')
+  router.push('/settings')
 }
 
 function shiftMonth(delta: number) {
@@ -152,8 +161,6 @@ function shiftMonth(delta: number) {
 
 <template>
   <div class="home-page">
-    <div v-if="isGuest" class="demo-banner">演示数据，登录后可正常使用</div>
-
     <header class="topbar">
       <button type="button" class="icon-btn" aria-label="菜单" @click="menuOpen = true">
         <span class="burger" aria-hidden="true" />
@@ -162,8 +169,18 @@ function shiftMonth(delta: number) {
         <Mascot :size="28" rounded />
         金蝉记账
       </h1>
-      <button v-if="isGuest" type="button" class="login-chip" @click="goLogin">去登录</button>
-      <button v-else type="button" class="login-chip" @click="router.push('/settings')">设置</button>
+      <button v-if="isGuest" type="button" class="login-chip" data-guide="settings-btn" @click="goLogin">
+        去登录
+      </button>
+      <button
+        v-else
+        type="button"
+        class="login-chip"
+        data-guide="settings-btn"
+        @click="openSettings"
+      >
+        设置
+      </button>
     </header>
 
     <SideMenu :open="menuOpen" @close="menuOpen = false" />
@@ -201,7 +218,7 @@ function shiftMonth(delta: number) {
         </div>
       </section>
 
-      <div class="weekdays" role="tablist" aria-label="本周日期">
+      <div class="weekdays" role="tablist" aria-label="本周日期" data-guide="weekdays">
         <button
           v-for="(day, index) in WEEKDAYS"
           :key="day"
@@ -265,14 +282,6 @@ function shiftMonth(delta: number) {
   margin: -0.35rem -0.9rem 0;
   min-height: 100%;
   background: var(--bg0);
-}
-
-.demo-banner {
-  padding: 0.38rem 0.75rem;
-  text-align: center;
-  font-size: 0.75rem;
-  color: var(--brand-deep);
-  background: #efe6cf;
 }
 
 .topbar {

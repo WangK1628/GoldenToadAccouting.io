@@ -1,7 +1,7 @@
 {
   "name": "golden-toad-accounting",
   "private": true,
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "金蝉记账 — 本地优先 AI 记账 PWA",
   "author": "WangK1628 (https://github.com/WangK1628)",
   "license": "MIT",
@@ -31,9 +31,11 @@
     "android:assemble": "node -e \"require('node:child_process').execSync(process.platform==='win32'?'gradlew.bat assembleRelease':'./gradlew assembleRelease',{cwd:'android',stdio:'inherit'})\""
   },
   "dependencies": {
+    "@capacitor-community/file-opener": "^8.0.1",
     "@capacitor/android": "^8.5.0",
     "@capacitor/cli": "^8.5.0",
     "@capacitor/core": "^8.5.0",
+    "@capacitor/filesystem": "^8.1.3",
     "dexie": "^4.0.11",
     "pinia": "^3.0.3",
     "vue": "^3.5.18",
@@ -43,6 +45,7 @@
   "devDependencies": {
     "@eslint/js": "^9.33.0",
     "@types/node": "^26.2.0",
+    "@vercel/node": "^5.3.24",
     "@vitejs/plugin-vue": "^6.0.1",
     "cross-env": "^10.1.0",
     "eslint": "^9.33.0",
@@ -57,7 +60,6 @@
     "vite-plugin-pwa": "^1.0.2",
     "vitest": "^4.1.11",
     "vue-tsc": "^3.0.5",
-    "workbox-window": "^7.3.0",
-    "@vercel/node": "^5.3.24"
+    "workbox-window": "^7.3.0"
   }
 }

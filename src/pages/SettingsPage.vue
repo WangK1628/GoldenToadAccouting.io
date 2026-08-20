@@ -25,6 +25,7 @@ const authStore = useAuthStore()
 const accountDesc = computed(() => {
   if (!authStore.session) return '未登录'
   if (authStore.session.mode === 'guest') return '游客 · 本地数据'
+  if (authStore.session.mode === 'admin') return '管理员'
   return authStore.session.email ?? '已登录'
 })
 
@@ -33,12 +34,12 @@ const sections = computed<SettingsSection[]>(() => [
     title: '账号',
     items: [
       { label: '登录 / 注册', desc: accountDesc.value, to: '/login' },
-      { label: '下载与发布', to: '/release' },
+      { label: '下载与发布', desc: '检查更新并安装', to: '/release' },
     ],
   },
   {
     title: 'AI',
-    items: [{ label: 'AI 设置', desc: 'DeepSeek / API Key', to: '/settings/ai' }],
+    items: [{ label: 'AI 设置', desc: '填写 API Key 即可使用', to: '/settings/ai' }],
   },
   {
     title: '账本',
@@ -52,7 +53,7 @@ const sections = computed<SettingsSection[]>(() => [
   {
     title: '数据',
     items: [
-      { label: '导入 / 导出', desc: 'JSON · CSV · Excel', to: '/settings/data' },
+      { label: '导入 / 导出', desc: authStore.canImportExport() ? 'JSON · CSV · Excel' : '登录后可用', to: '/settings/data', disabled: !authStore.canImportExport() },
       { label: '清空数据', desc: '二次确认', to: '/settings/data' },
     ],
   },

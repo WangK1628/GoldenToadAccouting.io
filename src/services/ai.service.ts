@@ -50,8 +50,8 @@ class AiService {
     const trial = await settingsRepository.isAiTrialAvailable()
     if (!trial) return settings
     const session = await authService.getSession()
-    if (session?.mode !== 'registered' || !session.email) return settings
-    return { ...settings, trialEmail: session.email }
+    if (session?.email) return { ...settings, trialEmail: session.email }
+    return settings
   }
 
   private async finishTrial(email: string | undefined, usedTrial: boolean): Promise<void> {

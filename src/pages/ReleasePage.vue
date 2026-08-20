@@ -1,12 +1,41 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { onMounted, ref } from 'vue'
 import PageHeader from '@/components/layout/PageHeader.vue'
 import { APP, AUTHOR } from '@/constants/author'
 import Mascot from '@/components/common/Mascot.vue'
+import { useToast } from '@/composables/useToast'
+import {
+  downloadAndInstallApk,
+  fetchLatestRelease,
+  type LatestRelease,
+} from '@/services/update.service'
 
-const releaseUrl = computed(
-  () => `${AUTHOR.repo}/releases/latest/download/golden-toad-accounting.apk`,
-)
+const toast = useToast()
+const loading = ref(false)
+const latest = ref<LatestRelease | null>(null)
+
+onMounted(async () => {
+  try {
+    latest.value = await fetchLatestRelease()
+  } catch {
+    latest.value = null
+  }
+})
+
+async function updateNow() {
+  if (loading.value) return
+  loading.value = true
+  try {
+    const info = latest.value ?? (await fetchLatestRelease())
+    latest.value = info
+    toast.success(info.newer ? `正在下载 ${info.tag}` : '正在获取最新安装包')
+    await downloadAndInstallApk(info.apkUrl)
+  } catch (error) {
+    toast.error(error instanceof Error ? error.message : '更新失败')
+  } finally {
+    loading.value = false
+  }
+}
 </script>
 
 <template>
@@ -23,8 +52,14 @@ const releaseUrl = computed(
     <section class="card">
       <h3>Android 安装包</h3>
       <p>基于 Capacitor 打包，体积轻量，离线可用。</p>
-      <a class="download" :href="releaseUrl" target="_blank" rel="noopener">下载 APK</a>
-      <p class="note">首次安装需在系统设置中允许「未知来源」。</p>
+      <p v-if="latest" class="status">
+        当前 v{{ APP.version }} · 最新 {{ latest.tag }}
+        {{ latest.newer ? ' · 有新版本' : ' · 已是最新' }}
+      </p>
+      <button type="button" class="download" :disabled="loading" @click="updateNow">
+        {{ loading ? '下载中…' : '检查更新并安装' }}
+      </button>
+      <p class="note">手机上会下载 APK 并打开系统安装界面。网页版会开始下载文件。</p>
     </section>
 
     <section class="card">
@@ -108,12 +143,22 @@ const releaseUrl = computed(
   display: inline-block;
   margin-top: 0.65rem;
   padding: 0.55rem 1rem;
+  border: none;
   border-radius: 999px;
   background: var(--brand);
   color: #fff;
   text-decoration: none;
   font-size: 0.85rem;
   font-weight: 600;
+  cursor: pointer;
+}
+
+.download:disabled {
+  opacity: 0.65;
+}
+
+.status {
+  margin-top: 0.45rem !important;
 }
 
 .link {

@@ -2,7 +2,7 @@ export type TransactionType = 'expense' | 'income'
 
 export type ThemeMode = 'light' | 'dark' | 'system'
 
-export type AuthMode = 'guest' | 'registered'
+export type AuthMode = 'guest' | 'registered' | 'admin'
 
 export interface AuthSession {
   mode: AuthMode
@@ -132,4 +132,7 @@ export const SETTING_KEYS = {
   aiModel: 'ai.model',
   aiTemperature: 'ai.temperature',
   aiTrial: 'ai.trial',
+  personalStarted: 'account.personalStarted',
+  featureGuideDone: 'ui.featureGuideDone',
+  emailPending: 'auth.emailPending',
 } as const
