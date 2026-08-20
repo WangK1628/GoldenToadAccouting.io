@@ -5,12 +5,15 @@ import PageHeader from '@/components/layout/PageHeader.vue'
 import { useToast } from '@/composables/useToast'
 import { aiService } from '@/services'
 import type { AiProviderType, AiSettings } from '@/models'
+import { AI_TRIAL_MAX_MESSAGES } from '@/models'
 
 const router = useRouter()
 const toast = useToast()
 
 const loading = ref(true)
 const saving = ref(false)
+const trialExhausted = ref(false)
+const hasOwnKey = ref(false)
 const form = ref<AiSettings>({
   provider: 'deepseek',
   baseUrl: 'https://api.deepseek.com',
@@ -37,6 +40,8 @@ const providerOptions: Array<{ value: AiProviderType; label: string; baseUrl: st
 
 onMounted(async () => {
   form.value = await aiService.loadSettings()
+  hasOwnKey.value = Boolean(form.value.apiKey.trim())
+  trialExhausted.value = await aiService.isTrialExhausted()
   loading.value = false
 })
 
@@ -51,10 +56,19 @@ function onProviderChange() {
 }
 
 async function save() {
+  if (!form.value.apiKey.trim() && trialExhausted.value) {
+    toast.error(`免费体验已用完（${AI_TRIAL_MAX_MESSAGES} 次），请填写 DeepSeek API Key`)
+    return
+  }
   saving.value = true
   try {
     await aiService.saveSettings({ ...form.value })
+    hasOwnKey.value = Boolean(form.value.apiKey.trim())
+    trialExhausted.value = await aiService.isTrialExhausted()
     toast.success('AI 设置已保存')
+    if (hasOwnKey.value) {
+      router.push('/chat')
+    }
   } catch (e) {
     toast.error(e instanceof Error ? e.message : '保存失败')
   } finally {
@@ -70,6 +84,10 @@ function goChat() {
 <template>
   <div class="ai-settings-page">
     <PageHeader title="AI 设置" />
+
+    <p v-if="trialExhausted && !form.apiKey" class="notice required">
+      免费体验已用完（{{ AI_TRIAL_MAX_MESSAGES }} 次）。请填写 DeepSeek API Key 后才能继续使用 AI 助手。
+    </p>
 
     <section v-if="loading" class="loading">加载中…</section>
 
@@ -95,7 +113,8 @@ function goChat() {
           v-model="form.apiKey"
           type="password"
           autocomplete="off"
-          placeholder="仅保存在本地，不会上传"
+          :required="trialExhausted && !hasOwnKey"
+          placeholder="sk-..."
         />
         <span class="hint">密钥只保存在这台设备上。</span>
       </label>
@@ -131,6 +150,17 @@ function goChat() {
   text-align: center;
   color: var(--muted);
   padding: 2rem 0;
+}
+
+.notice.required {
+  margin: 0 0 0.85rem;
+  padding: 0.65rem 0.75rem;
+  border-radius: 12px;
+  background: #fdecea;
+  color: #a33232;
+  font-size: 0.82rem;
+  line-height: 1.45;
+  border: 1px solid #f0c4c4;
 }
 
 .form {

@@ -1,5 +1,5 @@
 import type { AiConversation, AiMessage, AiSettings, ThemeMode } from '@/models'
-import { GUIDE_REWARD_POINTS, SETTING_KEYS } from '@/models'
+import { AI_TRIAL_MAX_MESSAGES, AI_TRIAL_MESSAGE_COST, GUIDE_REWARD_POINTS, SETTING_KEYS } from '@/models'
 import { BaseRepository } from '@/repositories/base.repository'
 import { createId } from '@/utils/id'
 import { nowIso } from '@/utils/time'
@@ -78,21 +78,79 @@ export class SettingsRepository extends BaseRepository {
   async setAiPoints(points: number): Promise<void> {
     const safe = Math.max(0, Math.floor(points))
     await this.set(SETTING_KEYS.aiPoints, String(safe))
-    await this.setAiTrialAvailable(safe >= GUIDE_REWARD_POINTS)
+    const canTrial = safe >= AI_TRIAL_MESSAGE_COST && (await this.getTrialUseCount()) < AI_TRIAL_MAX_MESSAGES
+    await this.setAiTrialAvailable(canTrial)
   }
 
   async grantGuideRewardPoints(): Promise<void> {
     await this.setAiPoints(GUIDE_REWARD_POINTS)
   }
 
+  async getTrialUseCount(): Promise<number> {
+    const raw = await this.get(SETTING_KEYS.aiTrialUses)
+    const value = Number.parseInt(raw ?? '0', 10)
+    if (!Number.isFinite(value) || value < 0) return 0
+    return Math.min(AI_TRIAL_MAX_MESSAGES, value)
+  }
+
+  async getTrialRemaining(): Promise<number> {
+    return Math.max(0, AI_TRIAL_MAX_MESSAGES - await this.getTrialUseCount())
+  }
+
+  async canUseTrialApi(): Promise<boolean> {
+    const settings = await this.getAiSettings()
+    if (settings.apiKey.trim()) return false
+    return (await this.getTrialUseCount()) < AI_TRIAL_MAX_MESSAGES
+  }
+
+  async reserveTrialMessage(): Promise<{ usedTrial: boolean; remaining: number; uses: number }> {
+    const settings = await this.getAiSettings()
+    if (settings.apiKey.trim()) {
+      return { usedTrial: false, remaining: AI_TRIAL_MAX_MESSAGES, uses: 0 }
+    }
+    const uses = await this.getTrialUseCount()
+    if (uses >= AI_TRIAL_MAX_MESSAGES) {
+      return { usedTrial: false, remaining: 0, uses }
+    }
+    const next = await this.incrementTrialUseCount()
+    return {
+      usedTrial: true,
+      remaining: Math.max(0, AI_TRIAL_MAX_MESSAGES - next),
+      uses: next,
+    }
+  }
+
+  private async incrementTrialUseCount(): Promise<number> {
+    const next = Math.min(AI_TRIAL_MAX_MESSAGES, (await this.getTrialUseCount()) + 1)
+    await this.set(SETTING_KEYS.aiTrialUses, String(next))
+    const remaining = Math.max(0, AI_TRIAL_MAX_MESSAGES - next)
+    await this.setAiPoints(remaining * AI_TRIAL_MESSAGE_COST)
+    if (next >= AI_TRIAL_MAX_MESSAGES) {
+      await this.setAiTrialAvailable(false)
+    }
+    return next
+  }
+
+  async isAiConfigured(): Promise<boolean> {
+    const settings = await this.getAiSettings()
+    if (settings.apiKey.trim()) return true
+    return await this.canUseTrialApi()
+  }
+
+  async deductAiPoints(cost: number): Promise<number> {
+    const current = await this.getAiPoints()
+    const next = Math.max(0, current - Math.max(1, Math.floor(cost)))
+    await this.setAiPoints(next)
+    return next
+  }
+
+  /** @deprecated use deductAiPoints */
   async consumeAiPoints(): Promise<void> {
     await this.setAiPoints(0)
   }
 
   async isAiTrialAvailable(): Promise<boolean> {
-    const points = await this.getAiPoints()
-    if (points >= GUIDE_REWARD_POINTS) return true
-    return (await this.get(SETTING_KEYS.aiTrial)) === '1'
+    return await this.canUseTrialApi()
   }
 
   async setAiTrialAvailable(enabled: boolean): Promise<void> {

@@ -7,9 +7,12 @@ import ToastHost from '@/components/common/ToastHost.vue'
 import FeatureGuide from '@/components/onboarding/FeatureGuide.vue'
 import CleanDataVideoPlayer from '@/components/media/CleanDataVideoPlayer.vue'
 import { useSafeArea, useAppHeight } from '@/composables/useSafeArea'
+import { useAndroidBack } from '@/composables/useAndroidBack'
 import { useOnlineStatus } from '@/composables/useOnlineStatus'
 import { usePwaUpdate } from '@/composables/usePwaUpdate'
 import { useToast } from '@/composables/useToast'
+import { aiService } from '@/services/ai.service'
+import { AI_TRIAL_MAX_MESSAGES } from '@/models'
 import { useUiStore } from '@/stores/ui.store'
 
 const route = useRoute()
@@ -25,6 +28,7 @@ const { applyUpdate } = usePwaUpdate(() => {
 
 useSafeArea()
 useAppHeight()
+useAndroidBack()
 
 const showActionBar = computed(() => Boolean(route.meta.actionBar))
 const actionBarVariant = computed(() =>
@@ -32,9 +36,17 @@ const actionBarVariant = computed(() =>
 )
 
 function onSend(text: string) {
-  if (route.name === 'home') {
+  if (route.name !== 'home') return
+  void (async () => {
+    const exhausted = await aiService.isTrialExhausted()
+    const settings = await aiService.loadSettings()
+    if (exhausted && !settings.apiKey.trim()) {
+      toast.error(`免费体验已用完（${AI_TRIAL_MAX_MESSAGES} 次），请填写 API Key 后继续`)
+      router.push('/chat')
+      return
+    }
     router.push({ path: '/chat', query: { q: text } })
-  }
+  })()
 }
 
 function onRecord() {

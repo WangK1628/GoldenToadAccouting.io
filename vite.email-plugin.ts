@@ -11,14 +11,14 @@ import type { ApiResult } from './api/_lib/types'
 type Handler = (
   env: Record<string, string>,
   body: Record<string, unknown>,
-  emailHeader: string,
+  headers: { email: string; userId: string },
 ) => Promise<ApiResult>
 
 const ROUTES: Record<string, Handler> = {
   '/api/send-code': (env, body) => handleSendCode(env, body),
   '/api/verify-code': (env, body) => handleVerifyCode(env, body),
-  '/api/ai-trial': (env, body, email) => handleAiTrial(env, body, email),
-  '/api/consume-trial': (env, body) => handleConsumeTrial(env, body),
+  '/api/ai-trial': (env, body, headers) => handleAiTrial(env, body, headers.email, headers.userId),
+  '/api/consume-trial': (env, body, headers) => handleConsumeTrial(env, body, headers.userId),
 }
 
 function readBody(req: IncomingMessage): Promise<string> {
@@ -57,7 +57,8 @@ export function emailDevPlugin(env: Record<string, string>): Plugin {
           const raw = await readBody(req)
           const payload = JSON.parse(raw || '{}') as Record<string, unknown>
           const emailHeader = String(req.headers['x-user-email'] ?? '')
-          const result = await handler(env, payload, emailHeader)
+          const userIdHeader = String(req.headers['x-user-id'] ?? '')
+          const result = await handler(env, payload, { email: emailHeader, userId: userIdHeader })
           httpRes.statusCode = result.status
           httpRes.setHeader('Content-Type', 'application/json; charset=utf-8')
           httpRes.end(JSON.stringify(result.json))

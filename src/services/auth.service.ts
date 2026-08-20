@@ -2,6 +2,7 @@ import { settingsRepository, userRepository } from '@/repositories'
 import { createPasswordHash, hashPassword } from '@/utils/crypto'
 import { isValidEmail, normalizeEmail } from '@/utils/email'
 import { createId } from '@/utils/id'
+import { apiUrl } from '@/utils/api-url'
 import { ADMIN_ACCOUNT, isAdminAccount } from '@/constants/admin'
 import { SETTING_KEYS, type AuthMode, type AuthSession } from '@/models'
 
@@ -18,7 +19,6 @@ class AuthService {
   }
 
   async getSession(): Promise<AuthSession | null> {
-    await this.ensureAdminUser()
     const raw = await settingsRepository.get(SETTING_KEYS.authSession)
     if (!raw) return null
     try {
@@ -42,9 +42,18 @@ class AuthService {
   }
 
   async enterGuestMode(): Promise<AuthSession> {
-    const existing = await this.getSession()
-    const userId =
-      existing?.mode === 'guest' && existing.userId ? existing.userId : createId('guest')
+    const raw = await settingsRepository.get(SETTING_KEYS.authSession)
+    let userId = createId('guest')
+    if (raw) {
+      try {
+        const existing = JSON.parse(raw) as AuthSession
+        if (existing.mode === 'guest' && existing.userId) {
+          userId = existing.userId
+        }
+      } catch {
+        // ignore broken session payload
+      }
+    }
     const session: AuthSession = {
       mode: 'guest',
       userId,
@@ -52,7 +61,18 @@ class AuthService {
       displayName: '游客',
     }
     await this.saveSession(session)
+    await this.ensureFirstLaunchReward()
     return session
+  }
+
+  private async ensureFirstLaunchReward(): Promise<void> {
+    const granted = await settingsRepository.get(SETTING_KEYS.firstLaunchReward)
+    if (granted === '1') return
+    const points = await settingsRepository.getAiPoints()
+    if (points === 0) {
+      await settingsRepository.grantGuideRewardPoints()
+    }
+    await settingsRepository.set(SETTING_KEYS.firstLaunchReward, '1')
   }
 
   private sessionFromUser(user: { id: string; email: string; displayName: string }): AuthSession {
@@ -78,8 +98,7 @@ class AuthService {
   }
 
   private apiUrl(path: string): string {
-    const root = (import.meta.env.VITE_EMAIL_API_URL || '/api/send-code').replace(/\/send-code$/, '')
-    return `${root}${path}`
+    return apiUrl(path)
   }
 
   private async postApi(path: string, body: Record<string, unknown>): Promise<Record<string, unknown>> {

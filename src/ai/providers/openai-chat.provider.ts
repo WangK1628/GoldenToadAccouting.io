@@ -8,6 +8,7 @@ import type {
 } from '@/ai/providers/types'
 import { AiProviderError } from '@/ai/providers/types'
 import { readSseJson } from '@/ai/providers/sse'
+import { apiUrl } from '@/utils/api-url'
 
 interface StreamChoicePayload {
   error?: { message?: string } | string
@@ -77,7 +78,7 @@ export function createChatProvider(settings: AiSettings): ChatProvider {
 
       const useTrial = Boolean(!settings.apiKey && (settings.trialEmail || settings.trialUserId))
       const useStream = !useTrial && Boolean(request.stream && options?.onToken)
-      const url = useTrial ? '/api/ai-trial' : `${baseUrl}/v1/chat/completions`
+      const url = useTrial ? apiUrl('/api/ai-trial') : `${baseUrl}/v1/chat/completions`
       const headers: Record<string, string> = { 'Content-Type': 'application/json' }
       if (useTrial) {
         if (settings.trialEmail) headers['X-User-Email'] = settings.trialEmail
@@ -97,7 +98,18 @@ export function createChatProvider(settings: AiSettings): ChatProvider {
       })
 
       if (!useStream) {
-        const payload = (await response.json()) as StreamChoicePayload
+        const raw = await response.text()
+        let payload: StreamChoicePayload
+        try {
+          payload = JSON.parse(raw) as StreamChoicePayload
+        } catch {
+          throw new AiProviderError(
+            response.ok
+              ? 'AI 服务返回格式异常'
+              : 'AI 服务不可用，请检查网络或在设置中填写 API Key',
+            response.status,
+          )
+        }
         if (!response.ok) {
           throw new AiProviderError(readProviderError(payload, response.status), response.status)
         }

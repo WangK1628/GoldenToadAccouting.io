@@ -1,3 +1,4 @@
+import { Capacitor } from '@capacitor/core'
 import { onUnmounted, ref } from 'vue'
 
 type SpeechRecognitionCtor = new () => SpeechRecognitionInstance
@@ -28,6 +29,18 @@ function getRecognitionCtor(): SpeechRecognitionCtor | null {
     webkitSpeechRecognition?: SpeechRecognitionCtor
   }
   return w.SpeechRecognition ?? w.webkitSpeechRecognition ?? null
+}
+
+async function ensureNativeMicPermission(): Promise<boolean> {
+  if (!Capacitor.isNativePlatform()) return true
+  if (!navigator.mediaDevices?.getUserMedia) return true
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+    stream.getTracks().forEach((track) => track.stop())
+    return true
+  } catch {
+    return false
+  }
 }
 
 export function useSpeechRecognition() {
@@ -61,8 +74,10 @@ export function useSpeechRecognition() {
         }
         if (final) {
           finalText.value = `${finalText.value}${final}`.trim()
+          interimText.value = ''
+        } else {
+          interimText.value = interim
         }
-        interimText.value = interim
       }
 
       recognition.onerror = (event) => {
@@ -80,23 +95,30 @@ export function useSpeechRecognition() {
     return recognition
   }
 
+  function finalizeInterim() {
+    if (interimText.value) {
+      finalText.value = `${finalText.value}${interimText.value}`.trim()
+      interimText.value = ''
+    }
+  }
+
   async function start(): Promise<boolean> {
     error.value = null
     interimText.value = ''
     finalText.value = ''
+
+    if (Capacitor.isNativePlatform()) {
+      const allowed = await ensureNativeMicPermission()
+      if (!allowed) {
+        error.value = 'not-allowed'
+        return false
+      }
+    }
+
     const rec = ensureRecognition()
     if (!rec) {
       error.value = 'unsupported'
       return false
-    }
-    if (typeof navigator !== 'undefined' && navigator.mediaDevices?.getUserMedia) {
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-        stream.getTracks().forEach((track) => track.stop())
-      } catch {
-        error.value = 'not-allowed'
-        return false
-      }
     }
     try {
       rec.start()
@@ -120,12 +142,21 @@ export function useSpeechRecognition() {
     finalText.value = ''
   }
 
-  async function stopAndWait(timeoutMs = 1600): Promise<void> {
-    if (!recognition || !listening.value) return
+  async function stopAndWait(timeoutMs = 3500): Promise<void> {
+    if (!recognition || !listening.value) {
+      finalizeInterim()
+      return
+    }
     await new Promise<void>((resolve) => {
-      endResolve = resolve
+      endResolve = () => {
+        finalizeInterim()
+        resolve()
+      }
       recognition?.stop()
-      window.setTimeout(resolve, timeoutMs)
+      window.setTimeout(() => {
+        finalizeInterim()
+        resolve()
+      }, timeoutMs)
     })
   }
 
@@ -134,6 +165,7 @@ export function useSpeechRecognition() {
   }
 
   function consumeTranscript(): string {
+    finalizeInterim()
     const text = displayTranscript()
     interimText.value = ''
     finalText.value = ''

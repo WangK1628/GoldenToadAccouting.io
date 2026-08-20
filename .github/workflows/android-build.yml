@@ -46,10 +46,10 @@ jobs:
           files: golden-toad-accounting.apk
           generate_release_notes: true
           body: |
-            金蝉记账 v0.4.1 Android 安装包。
+            金蝉记账 v0.4.7 Android 安装包。
 
-            - 两轮新手引导：认识 App → 上手操作
-            - 完成引导赠送 100 积分，游客也可用 AI 记一笔
-            - 清空数据后播放内置庆祝视频
-            - 导入导出、AI 助手游客可用
-            - 产品文案仅保留「参考妙蛙记账」出处
+            - 修复 APK 中 AI 助手请求失败（生产环境 API 地址）
+            - 游客 AI 试用最多 3 次对话，用完后需填写自己的 DeepSeek API Key
+            - 修复 Android 启动卡顿与返回键直接退桌面
+            - 清空数据视频默认从 60 秒起播，修复手机端拖动进度条
+            - 麦克风权限与语音转文字、AI 回复换行展示优化

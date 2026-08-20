@@ -13,19 +13,26 @@ declare global {
 }
 
 async function bootstrap() {
-  const app = createApp(App)
-  const pinia = createPinia()
+  const bootTimeout = window.setTimeout(() => {
+    window.hideAppBoot?.()
+  }, 12000)
 
-  app.use(pinia)
-  app.use(router)
+  try {
+    const app = createApp(App)
+    const pinia = createPinia()
 
-  const themeStore = useThemeStore()
-  const authStore = useAuthStore()
-  await Promise.all([themeStore.load(), authStore.load()])
+    app.use(pinia)
+    app.use(router)
 
-  app.mount('#app')
+    const themeStore = useThemeStore()
+    const authStore = useAuthStore()
+    await Promise.all([themeStore.load(), authStore.load()])
 
-  window.hideAppBoot?.()
+    app.mount('#app')
+  } finally {
+    window.clearTimeout(bootTimeout)
+    window.hideAppBoot?.()
+  }
 }
 
 bootstrap().catch((error) => {

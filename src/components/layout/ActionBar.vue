@@ -5,8 +5,6 @@ import VoiceOverlay from '@/components/voice/VoiceOverlay.vue'
 import { useToast } from '@/composables/useToast'
 import { useSpeechRecognition } from '@/composables/useSpeechRecognition'
 
-const HOLD_MS = 180
-
 const props = withDefaults(
   defineProps<{
     variant?: 'home' | 'chat'
@@ -32,18 +30,36 @@ const router = useRouter()
 const toast = useToast()
 const speech = useSpeechRecognition()
 
+const mode = ref<'text' | 'voice'>('text')
 const draft = ref('')
 const holding = ref(false)
 const canceling = ref(false)
 const voiceActive = ref(false)
 const startY = ref(0)
-const inputEl = ref<HTMLInputElement | null>(null)
-const pillEl = ref<HTMLElement | null>(null)
 
-let holdTimer: ReturnType<typeof setTimeout> | null = null
+const modeLabel = computed(() =>
+  mode.value === 'text' ? '切换语音记录' : '切换文字记录',
+)
+
+const voiceLabel = computed(() => {
+  if (!holding.value) return '按住说话'
+  if (canceling.value) return '松开取消'
+  const live = speech.displayTranscript()
+  if (live) return live
+  if (speech.listening.value) return '正在听…'
+  return '按住说话'
+})
 
 const overlayText = computed(() => speech.displayTranscript())
 const speechListening = computed(() => speech.listening.value)
+
+function toggleMode() {
+  if (mode.value === 'text' && !speech.supported) {
+    toast.error('当前环境不支持语音识别，请用 Chrome / Edge，或在系统里允许麦克风')
+    return
+  }
+  mode.value = mode.value === 'text' ? 'voice' : 'text'
+}
 
 function openChat() {
   emit('chat')
@@ -63,65 +79,35 @@ function onRecord() {
   emit('record')
 }
 
-function clearHoldTimer() {
-  if (!holdTimer) return
-  clearTimeout(holdTimer)
-  holdTimer = null
-}
-
-function isSendTarget(target: EventTarget | null) {
-  return target instanceof HTMLElement && Boolean(target.closest('.send-btn'))
-}
-
-function onPillDown(event: PointerEvent) {
-  if (props.disabled || isSendTarget(event.target)) return
-  startY.value = event.clientY
+function onVoiceDown(event: PointerEvent) {
+  if (props.disabled) return
+  if (!speech.supported) {
+    toast.error('当前环境不支持语音识别')
+    return
+  }
+  holding.value = true
   canceling.value = false
-  pillEl.value?.setPointerCapture(event.pointerId)
-  clearHoldTimer()
-  holdTimer = setTimeout(() => {
-    holdTimer = null
-    inputEl.value?.blur()
-    void beginVoice()
-  }, HOLD_MS)
+  voiceActive.value = true
+  startY.value = event.clientY
+  void speech.start().then((started) => {
+    if (!started) {
+      holding.value = false
+      voiceActive.value = false
+      if (speech.error.value === 'not-allowed') toast.error('请允许麦克风权限后重试')
+      else toast.error('无法开始语音识别')
+      return
+    }
+    emit('voiceStart')
+  })
 }
 
-function onPillMove(event: PointerEvent) {
+function onVoiceMove(event: PointerEvent) {
   if (!holding.value) return
   canceling.value = startY.value - event.clientY > 72
 }
 
-async function onPillUp() {
-  const pendingHold = Boolean(holdTimer)
-  clearHoldTimer()
-  if (holding.value || voiceActive.value) {
-    await finishVoice()
-    return
-  }
-  if (pendingHold) inputEl.value?.focus()
-}
-
-async function beginVoice() {
-  if (props.disabled || holding.value) return
-  if (!speech.supported) {
-    toast.error('当前环境不支持语音识别，请用 Chrome / Edge，或在系统里允许麦克风')
-    return
-  }
-  holding.value = true
-  voiceActive.value = true
-  const started = await speech.start()
-  if (!started) {
-    holding.value = false
-    voiceActive.value = false
-    if (speech.error.value === 'not-allowed') toast.error('请允许麦克风权限后重试')
-    else toast.error('无法开始语音识别')
-    return
-  }
-  emit('voiceStart')
-}
-
-async function finishVoice() {
-  if (!holding.value && !voiceActive.value) return
+async function onVoiceUp() {
+  if (!holding.value) return
   const wasCanceling = canceling.value
   holding.value = false
   voiceActive.value = false
@@ -146,8 +132,7 @@ async function finishVoice() {
 }
 
 function onVoiceCancel() {
-  clearHoldTimer()
-  if (!holding.value && !voiceActive.value) return
+  if (!holding.value) return
   holding.value = false
   voiceActive.value = false
   canceling.value = false
@@ -190,17 +175,25 @@ function onVoiceCancel() {
 
     <div class="pill-wrap">
       <div
-        ref="pillEl"
         class="pill"
         data-guide="voice-pill"
-        :class="{ holding, canceling }"
-        @pointerdown="onPillDown"
-        @pointermove="onPillMove"
-        @pointerup="onPillUp"
-        @pointercancel="onVoiceCancel"
+        :class="{ holding, canceling, 'voice-mode': mode === 'voice' }"
       >
-        <span class="mic-slot" aria-hidden="true">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+        <button
+          type="button"
+          class="mode-btn"
+          :aria-label="modeLabel"
+          :disabled="disabled"
+          @click="toggleMode"
+        >
+          <svg
+            v-if="mode === 'text'"
+            width="22"
+            height="22"
+            viewBox="0 0 24 24"
+            fill="none"
+            aria-hidden="true"
+          >
             <path
               d="M12 3a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3Z"
               stroke="currentColor"
@@ -213,26 +206,58 @@ function onVoiceCancel() {
               stroke-linecap="round"
             />
           </svg>
-        </span>
+          <svg v-else width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <rect
+              x="5"
+              y="7"
+              width="14"
+              height="10"
+              rx="2"
+              stroke="currentColor"
+              stroke-width="1.8"
+            />
+            <path
+              d="M8 11h8M8 14h5"
+              stroke="currentColor"
+              stroke-width="1.8"
+              stroke-linecap="round"
+            />
+          </svg>
+        </button>
 
-        <input
-          ref="inputEl"
-          v-model="draft"
-          class="text-input"
-          type="text"
-          enterkeyhint="send"
-          placeholder="文字记录或按住语音记录"
-          :disabled="disabled"
-          @keydown.enter.prevent="submitText"
-        />
+        <template v-if="mode === 'text'">
+          <input
+            v-model="draft"
+            class="text-input"
+            type="text"
+            enterkeyhint="send"
+            placeholder="文字记录"
+            :disabled="disabled"
+            @keydown.enter.prevent="submitText"
+          />
+          <button
+            type="button"
+            class="send-btn"
+            aria-label="发送"
+            :disabled="disabled || !draft.trim()"
+            @click="submitText"
+          >
+            +
+          </button>
+        </template>
+
         <button
+          v-else
           type="button"
-          class="send-btn"
-          aria-label="发送"
-          :disabled="disabled || !draft.trim()"
-          @click="submitText"
+          class="voice-btn"
+          :disabled="disabled"
+          @pointerdown.prevent="onVoiceDown"
+          @pointermove="onVoiceMove"
+          @pointerup="onVoiceUp"
+          @pointerleave="onVoiceCancel"
+          @pointercancel="onVoiceCancel"
         >
-          +
+          {{ voiceLabel }}
         </button>
       </div>
     </div>
@@ -333,8 +358,6 @@ function onVoiceCancel() {
   background: #fff;
   border: 1px solid var(--line);
   box-shadow: 0 8px 22px rgba(90, 70, 30, 0.08);
-  touch-action: none;
-  user-select: none;
   transition:
     border-color 0.15s ease,
     box-shadow 0.15s ease;
@@ -350,33 +373,33 @@ function onVoiceCancel() {
   box-shadow: 0 0 0 3px #c0392b33;
 }
 
-.mic-slot {
+.mode-btn,
+.send-btn,
+.voice-btn {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+.mode-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 2.7rem;
-  height: 2.7rem;
   flex-shrink: 0;
-  color: var(--muted);
-  pointer-events: none;
-}
-
-.send-btn {
-  border: none;
-  background: transparent;
-  color: var(--brand-deep);
-  cursor: pointer;
-  width: 2.7rem;
-  height: 2.7rem;
+  width: 2.85rem;
+  height: 2.85rem;
+  margin: -0.12rem 0 -0.12rem -0.08rem;
   border-radius: 999px;
-  font-size: 1.35rem;
-  line-height: 1;
-  flex-shrink: 0;
+  color: var(--muted);
+  touch-action: manipulation;
 }
 
-.send-btn:disabled {
-  opacity: 0.45;
-  cursor: default;
+.mode-btn:active {
+  background: var(--cream-deep);
+}
+
+.pill.voice-mode .mode-btn {
+  color: var(--brand-deep);
 }
 
 .text-input {
@@ -392,6 +415,38 @@ function onVoiceCancel() {
 
 .text-input::placeholder {
   color: var(--muted-2);
+}
+
+.send-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.7rem;
+  height: 2.7rem;
+  border-radius: 999px;
+  color: var(--brand-deep);
+  font-size: 1.35rem;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.send-btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.voice-btn {
+  flex: 1;
+  min-height: 2.7rem;
+  padding: 0 0.35rem;
+  font-size: 0.92rem;
+  color: var(--ink);
+  text-align: center;
+  touch-action: none;
+  user-select: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .robot {

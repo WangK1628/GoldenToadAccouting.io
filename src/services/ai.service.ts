@@ -5,10 +5,11 @@ import { AI_TOOLS } from '@/ai/tools/definitions'
 import { toolStatusLabel } from '@/ai/tools/labels'
 import { buildBookContext, executeToolCall } from '@/ai/tools/executor'
 import type { AiConversation, AiSettings, AuthSession } from '@/models'
-import { GUIDE_REWARD_POINTS } from '@/models'
+import { AI_TRIAL_MAX_MESSAGES } from '@/models'
 import { aiLogRepository, settingsRepository } from '@/repositories'
 import { appService } from '@/services/app.service'
 import { authService } from '@/services/auth.service'
+import { apiUrl } from '@/utils/api-url'
 
 const MAX_TOOL_ROUNDS = 8
 
@@ -17,6 +18,8 @@ export interface ChatReply {
   reply: string
   mutated: boolean
   pointsConsumed: boolean
+  trialRemaining: number
+  trialExhausted: boolean
 }
 
 export interface ChatMessageView {
@@ -48,10 +51,21 @@ class AiService {
   }
 
   async getSettingsConfigured(): Promise<boolean> {
+    return settingsRepository.isAiConfigured()
+  }
+
+  async getTrialUseCount(): Promise<number> {
+    return settingsRepository.getTrialUseCount()
+  }
+
+  async getTrialRemaining(): Promise<number> {
+    return settingsRepository.getTrialRemaining()
+  }
+
+  async isTrialExhausted(): Promise<boolean> {
     const settings = await settingsRepository.getAiSettings()
-    if (settings.apiKey.trim()) return true
-    const points = await settingsRepository.getAiPoints()
-    return points >= GUIDE_REWARD_POINTS
+    if (settings.apiKey.trim()) return false
+    return (await settingsRepository.getTrialUseCount()) >= AI_TRIAL_MAX_MESSAGES
   }
 
   async loadSettings() {
@@ -62,34 +76,39 @@ class AiService {
     await settingsRepository.saveAiSettings(settings)
   }
 
-  private async resolveSettings(): Promise<AiSettings> {
+  private async ensureTrialSession(): Promise<AuthSession> {
+    let session = await authService.getSession()
+    if (!session) {
+      session = await authService.enterGuestMode()
+    }
+    if (session.mode === 'guest' && !session.userId) {
+      session = await authService.enterGuestMode()
+    }
+    return session
+  }
+
+  private async resolveSettings(session: AuthSession): Promise<AiSettings> {
     const settings = await settingsRepository.getAiSettings()
     if (settings.apiKey.trim()) return settings
-    const points = await settingsRepository.getAiPoints()
-    if (points < GUIDE_REWARD_POINTS) return settings
-    const session = await authService.getSession()
+    if (!(await settingsRepository.canUseTrialApi())) return settings
     return { ...settings, ...trialIdentity(session) }
   }
 
-  private async consumePointsIfRecorded(
-    trialId: string | undefined,
-    usedPoints: boolean,
-    mutated: boolean,
-  ): Promise<boolean> {
-    if (!usedPoints || !mutated || !trialId) return false
-    await settingsRepository.consumeAiPoints()
+  private async syncTrialUsageRemote(trialId: string | undefined): Promise<void> {
+    if (!trialId) return
     try {
-      await fetch('/api/consume-trial', {
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+      const body = trialId.includes('@') ? { email: trialId } : { userId: trialId }
+      if (trialId.includes('@')) headers['X-User-Email'] = trialId
+      else headers['X-User-Id'] = trialId
+      await fetch(apiUrl('/api/consume-trial'), {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(
-          trialId.includes('@') ? { email: trialId } : { userId: trialId },
-        ),
+        headers,
+        body: JSON.stringify(body),
       })
     } catch {
-      // 本地积分已清零，远端标记失败不影响继续使用自己的 Key
+      // 本地次数为准
     }
-    return true
   }
 
   async listConversations(): Promise<AiConversation[]> {
@@ -125,16 +144,39 @@ class AiService {
     if (!trimmed) throw new Error('消息不能为空')
 
     await appService.initialize()
+
+    const settingsRaw = await settingsRepository.getAiSettings()
+    const hasOwnKey = Boolean(settingsRaw.apiKey.trim())
+    let trialRemaining = await settingsRepository.getTrialRemaining()
+    let pointsConsumed = false
+    let trialExhausted = false
+
+    if (!hasOwnKey && (await this.isTrialExhausted())) {
+      throw new AiProviderError(
+        `免费体验已用完（${AI_TRIAL_MAX_MESSAGES} 次），请在设置中填写 DeepSeek API Key`,
+      )
+    }
+
+    const session = await this.ensureTrialSession()
+    const settings = await this.resolveSettings(session)
     const book = await appService.getCurrentBook()
-    const settings = await this.resolveSettings()
-    const usedPoints = !settings.apiKey.trim()
 
     if (!settings.apiKey.trim() && !settings.trialEmail && !settings.trialUserId) {
-      const points = await settingsRepository.getAiPoints()
-      if (points >= GUIDE_REWARD_POINTS) {
-        throw new AiProviderError('请重新进入应用后再试，或先在设置中配置 AI API Key')
-      }
-      throw new AiProviderError('请完成新手引导获取积分，或在设置中配置 AI API Key')
+      throw new AiProviderError(
+        `免费体验已用完（${AI_TRIAL_MAX_MESSAGES} 次），请在设置中填写 DeepSeek API Key`,
+      )
+    }
+
+    if (!hasOwnKey) {
+      const reserved = await settingsRepository.reserveTrialMessage()
+      pointsConsumed = reserved.usedTrial
+      trialRemaining = reserved.remaining
+      trialExhausted = reserved.remaining <= 0
+    }
+
+    const trialId = settings.trialEmail ?? settings.trialUserId
+    if (pointsConsumed) {
+      void this.syncTrialUsageRemote(trialId)
     }
 
     let convId = conversationId
@@ -165,7 +207,6 @@ class AiService {
 
     let mutated = false
     let rounds = 0
-    const trialId = settings.trialEmail ?? settings.trialUserId
 
     while (rounds < MAX_TOOL_ROUNDS) {
       rounds += 1
@@ -220,8 +261,14 @@ class AiService {
         content: reply,
       })
 
-      const pointsConsumed = await this.consumePointsIfRecorded(trialId, usedPoints, mutated)
-      return { conversationId: convId, reply, mutated, pointsConsumed }
+      return {
+        conversationId: convId,
+        reply,
+        mutated,
+        pointsConsumed,
+        trialRemaining,
+        trialExhausted,
+      }
     }
 
     const fallback = '操作步骤较多，请简化问题后重试。'
@@ -230,8 +277,14 @@ class AiService {
       role: 'assistant',
       content: fallback,
     })
-    const pointsConsumed = await this.consumePointsIfRecorded(trialId, usedPoints, mutated)
-    return { conversationId: convId, reply: fallback, mutated, pointsConsumed }
+    return {
+      conversationId: convId,
+      reply: fallback,
+      mutated,
+      pointsConsumed,
+      trialRemaining,
+      trialExhausted,
+    }
   }
 }
 

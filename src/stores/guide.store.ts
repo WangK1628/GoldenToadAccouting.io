@@ -52,7 +52,7 @@ const INTRO_STEPS: GuideStep[] = [
     id: 'ai-reward',
     center: true,
     title: '完成第一轮 · 领取积分',
-    body: `点击「完成」领取 ${GUIDE_REWARD_POINTS} 积分，随后将进入第二轮上手引导。积分可调用管理员配置的 DeepSeek 接口，在 AI 小助手中体验一次记一笔。`,
+    body: `点击「完成」领取 ${GUIDE_REWARD_POINTS} 积分，可体验约 3 次 AI 提问；用完后请在设置中填写自己的 DeepSeek API Key。`,
     route: '/',
   },
 ]
@@ -88,7 +88,7 @@ const OPS_STEPS: GuideStep[] = [
     id: 'voice',
     target: '[data-guide="voice-pill"]',
     title: '文字 / 语音记录',
-    body: '中间输入框可打字发送；按住麦克风区域可语音输入，松手后会交给 AI 帮你记一笔。',
+    body: '点击左侧麦克风切换语音模式，按住说话；再点一次回到文字输入。有积分或自配 API Key 后，AI 可帮你记一笔。',
     route: '/',
     placement: 'top',
     align: 'center',
@@ -230,6 +230,14 @@ export const useGuideStore = defineStore('guide', () => {
     stepIndex.value += 1
   }
 
+  function retreat() {
+    if (stepIndex.value > 0) {
+      stepIndex.value -= 1
+      return
+    }
+    active.value = false
+  }
+
   async function complete(isGuest: boolean) {
     return finish(isGuest)
   }
@@ -264,6 +272,7 @@ export const useGuideStore = defineStore('guide', () => {
     finish,
     skip,
     advance,
+    retreat,
     complete,
     onGuestLoggedIn,
     initSteps,

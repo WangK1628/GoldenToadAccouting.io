@@ -123,8 +123,12 @@ export interface AiSettings {
   trialUserId?: string
 }
 
-/** 完成新手引导赠送的积分（仅可消耗一次 AI 记一笔） */
+/** 完成新手引导赠送的展示积分（与试用次数配套） */
 export const GUIDE_REWARD_POINTS = 100
+/** 每次 AI 提问消耗的展示积分 */
+export const AI_TRIAL_MESSAGE_COST = 33
+/** 默认免费试用次数（无自配 API Key 时） */
+export const AI_TRIAL_MAX_MESSAGES = 3
 
 export const SETTING_KEYS = {
   theme: 'theme',
@@ -137,6 +141,8 @@ export const SETTING_KEYS = {
   aiTemperature: 'ai.temperature',
   aiTrial: 'ai.trial',
   aiPoints: 'ai.points',
+  aiTrialUses: 'ai.trialUses',
+  firstLaunchReward: 'ai.firstLaunchReward',
   personalStarted: 'account.personalStarted',
   featureGuideDone: 'ui.featureGuideDone',
   featureGuideOpsDone: 'ui.featureGuideOpsDone',

@@ -5,13 +5,14 @@ import PageHeader from '@/components/layout/PageHeader.vue'
 import { useToast } from '@/composables/useToast'
 import { useAuthStore } from '@/stores/auth.store'
 import { aiService } from '@/services/ai.service'
-import { GUIDE_REWARD_POINTS } from '@/models'
+import { AI_TRIAL_MAX_MESSAGES } from '@/models'
 
 const router = useRouter()
 const authStore = useAuthStore()
 const toast = useToast()
 
 const aiPoints = ref(0)
+const trialRemaining = ref(0)
 
 const sessionLabel = computed(() => {
   if (!authStore.session) return '未登录'
@@ -31,6 +32,7 @@ const emailLabel = computed(() => authStore.session?.email ?? '—')
 
 onMounted(async () => {
   aiPoints.value = await aiService.getAiPoints()
+  trialRemaining.value = await aiService.getTrialRemaining()
 })
 
 async function logout() {
@@ -48,8 +50,8 @@ async function logout() {
       <div class="avatar">{{ avatarInitial }}</div>
       <h2>{{ sessionLabel }}</h2>
       <p v-if="authStore.session?.email" class="email">{{ emailLabel }}</p>
-      <p v-if="aiPoints >= GUIDE_REWARD_POINTS" class="points">
-        AI 体验积分 {{ aiPoints }}（可体验一次 AI 记一笔）
+      <p v-if="trialRemaining > 0" class="points">
+        AI 免费体验还可提问 {{ trialRemaining }} / {{ AI_TRIAL_MAX_MESSAGES }} 次
       </p>
     </section>
 

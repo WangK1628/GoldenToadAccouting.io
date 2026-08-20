@@ -1,8 +1,10 @@
 <script setup lang="ts">
-import { computed, onUnmounted, ref, watch } from 'vue'
+import { onUnmounted, ref, watch } from 'vue'
 import { useUiStore } from '@/stores/ui.store'
 
 const CLEAN_VIDEO_URL = `${import.meta.env.BASE_URL}videos/clean.mp4`
+const DEFAULT_PLAYBACK_RATE = 1.5
+const DEFAULT_START_SECONDS = 60
 
 const uiStore = useUiStore()
 
@@ -11,17 +13,8 @@ const playing = ref(false)
 const muted = ref(false)
 const currentTime = ref(0)
 const duration = ref(0)
+const progressValue = ref(0)
 const seeking = ref(false)
-
-const progress = computed({
-  get: () => (duration.value > 0 ? (currentTime.value / duration.value) * 100 : 0),
-  set: (value: number) => {
-    const video = videoEl.value
-    if (!video || !duration.value) return
-    video.currentTime = (value / 100) * duration.value
-    currentTime.value = video.currentTime
-  },
-})
 
 function formatTime(seconds: number) {
   if (!Number.isFinite(seconds) || seconds < 0) return '0:00'
@@ -34,19 +27,35 @@ function syncFromVideo() {
   const video = videoEl.value
   if (!video || seeking.value) return
   currentTime.value = video.currentTime
-  duration.value = video.duration || 0
+  duration.value = Number.isFinite(video.duration) ? video.duration : 0
+  progressValue.value = duration.value > 0 ? (currentTime.value / duration.value) * 100 : 0
   playing.value = !video.paused && !video.ended
+}
+
+function seekToDefaultStart() {
+  const video = videoEl.value
+  if (!video || !Number.isFinite(video.duration) || video.duration <= 0) return
+  const start = Math.min(DEFAULT_START_SECONDS, Math.max(0, video.duration - 0.5))
+  video.currentTime = start
+  currentTime.value = start
+  progressValue.value = (start / video.duration) * 100
 }
 
 function onLoadedMetadata() {
   const video = videoEl.value
   if (!video) return
-  duration.value = video.duration || 0
+  duration.value = Number.isFinite(video.duration) ? video.duration : 0
+  video.playbackRate = DEFAULT_PLAYBACK_RATE
+  seekToDefaultStart()
 }
 
 async function startPlayback() {
   const video = videoEl.value
   if (!video) return
+  video.playbackRate = DEFAULT_PLAYBACK_RATE
+  if (video.readyState >= 1) {
+    seekToDefaultStart()
+  }
   try {
     await video.play()
     playing.value = true
@@ -74,23 +83,42 @@ function toggleMute() {
   video.muted = muted.value
 }
 
+function seekToPercent(percent: number) {
+  const video = videoEl.value
+  if (!video || !duration.value) return
+  const clamped = Math.min(100, Math.max(0, percent))
+  progressValue.value = clamped
+  video.currentTime = (clamped / 100) * duration.value
+  currentTime.value = video.currentTime
+}
+
 function onSeekStart() {
   seeking.value = true
 }
 
-function onSeekEnd() {
+function onSeekInput(event: Event) {
+  const value = Number((event.target as HTMLInputElement).value)
+  seekToPercent(value)
+}
+
+function onSeekEnd(event: Event) {
+  const value = Number((event.target as HTMLInputElement).value)
+  seekToPercent(value)
   seeking.value = false
-  syncFromVideo()
 }
 
 function close() {
   const video = videoEl.value
   if (video) {
     video.pause()
-    video.currentTime = 0
+    if (Number.isFinite(video.duration) && video.duration > 0) {
+      const start = Math.min(DEFAULT_START_SECONDS, Math.max(0, video.duration - 0.5))
+      video.currentTime = start
+    }
   }
   playing.value = false
-  currentTime.value = 0
+  currentTime.value = DEFAULT_START_SECONDS
+  progressValue.value = 0
   uiStore.closeCleanVideo()
 }
 
@@ -162,16 +190,18 @@ onUnmounted(() => {
           </button>
           <span class="time">{{ formatTime(currentTime) }}</span>
           <input
-            v-model.number="progress"
             class="progress"
             type="range"
             min="0"
             max="100"
             step="0.1"
+            :value="progressValue"
             aria-label="播放进度"
-            @pointerdown="onSeekStart"
-            @pointerup="onSeekEnd"
-            @touchstart="onSeekStart"
+            @mousedown="onSeekStart"
+            @touchstart.passive="onSeekStart"
+            @input="onSeekInput"
+            @change="onSeekEnd"
+            @mouseup="onSeekEnd"
             @touchend="onSeekEnd"
           />
           <span class="time">{{ formatTime(duration) }}</span>
@@ -289,10 +319,11 @@ onUnmounted(() => {
 
 .progress {
   flex: 1;
-  height: 4px;
+  height: 1.25rem;
   margin: 0;
   accent-color: var(--brand);
   cursor: pointer;
+  touch-action: none;
 }
 
 .icon-btn {

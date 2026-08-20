@@ -22,7 +22,13 @@ const CODE_TTL_MS = 5 * 60 * 1000
 const RATE_WINDOW_MS = 60_000
 const recentSends = new Map<string, number>()
 const memoryPending = new Map<string, PendingRecord>()
-const memoryTrialUsed = new Set<string>()
+const memoryTrialUseCount = new Map<string, number>()
+const MAX_TRIAL_USES = 3
+
+function getTrialUseCount(userId: string, profile: UserProfile | null): number {
+  if (memoryTrialUseCount.has(userId)) return memoryTrialUseCount.get(userId) ?? 0
+  return profile?.trialUsed ? MAX_TRIAL_USES : 0
+}
 
 function json(status: number, body: Record<string, unknown>): ApiResult {
   return { status, json: body }
@@ -191,8 +197,12 @@ export async function handleAiTrial(
   if (!apiKey) return json(403, { ok: false, error: '请先在设置中填写 API Key' })
 
   const profile = await loadProfile(asEnv(env), userId)
-  if (profile?.trialUsed || memoryTrialUsed.has(userId)) {
-    return json(403, { ok: false, error: '免费体验已结束，请在设置中填写自己的 API Key' })
+  const useCount = getTrialUseCount(userId, profile)
+  if (useCount >= MAX_TRIAL_USES) {
+    return json(403, {
+      ok: false,
+      error: '免费体验已用完（最多 3 次），请在设置中填写自己的 DeepSeek API Key',
+    })
   }
 
   const baseUrl = (env.TRIAL_DEEPSEEK_BASE_URL || 'https://api.deepseek.com').replace(/\/$/, '')
@@ -234,17 +244,24 @@ export async function handleConsumeTrial(
   const userId = resolveTrialUserKey(body, '', userIdHeader)
   if (!userId) return json(400, { ok: false, error: '缺少用户标识' })
 
-  memoryTrialUsed.add(userId)
   const profile = await loadProfile(asEnv(env), userId)
-  if (!profile) return json(200, { ok: true })
-  if (profile.trialUsed) return json(200, { ok: true, already: true })
+  const nextCount = getTrialUseCount(userId, profile) + 1
+  memoryTrialUseCount.set(userId, nextCount)
 
-  profile.trialUsed = true
-  profile.updatedAt = new Date().toISOString()
-  if (hasGithubToken(asEnv(env))) {
-    await upsertProfile(asEnv(env), profile, `chore(users): 消耗试用 ${userId.slice(0, 8)}`).catch(
-      (error) => console.error('[users:trial]', error),
-    )
+  if (!profile) return json(200, { ok: true, uses: nextCount })
+
+  if (profile.trialUsed && nextCount >= MAX_TRIAL_USES) {
+    return json(200, { ok: true, already: true, uses: nextCount })
   }
-  return json(200, { ok: true })
+
+  if (nextCount >= MAX_TRIAL_USES) {
+    profile.trialUsed = true
+    profile.updatedAt = new Date().toISOString()
+    if (hasGithubToken(asEnv(env))) {
+      await upsertProfile(asEnv(env), profile, `chore(users): 消耗试用 ${userId.slice(0, 8)}`).catch(
+        (error) => console.error('[users:trial]', error),
+      )
+    }
+  }
+  return json(200, { ok: true, uses: nextCount })
 }

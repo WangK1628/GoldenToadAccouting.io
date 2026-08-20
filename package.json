@@ -1,7 +1,7 @@
 {
   "name": "golden-toad-accounting",
   "private": true,
-  "version": "0.4.1",
+  "version": "0.4.7",
   "description": "金蝉记账 — 本地优先 AI 记账 PWA",
   "author": "WangK1628 (https://github.com/WangK1628)",
   "license": "MIT",
@@ -33,6 +33,7 @@
   "dependencies": {
     "@capacitor-community/file-opener": "^8.0.1",
     "@capacitor/android": "^8.5.0",
+    "@capacitor/app": "^8.1.1",
     "@capacitor/cli": "^8.5.0",
     "@capacitor/core": "^8.5.0",
     "@capacitor/filesystem": "^8.1.3",

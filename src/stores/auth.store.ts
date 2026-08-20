@@ -15,8 +15,28 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   async function load() {
-    session.value = await authService.getSession()
-    ready.value = true
+    try {
+      let current = await authService.getSession()
+      if (!current) {
+        current = await authService.enterGuestMode()
+        await appService.ensureDemoPreview()
+      }
+      session.value = current
+    } catch (error) {
+      console.error('[auth] load failed', error)
+      try {
+        session.value = await authService.enterGuestMode()
+      } catch {
+        session.value = {
+          mode: 'guest',
+          userId: null,
+          email: null,
+          displayName: '游客',
+        }
+      }
+    } finally {
+      ready.value = true
+    }
   }
 
   async function enterGuest() {
