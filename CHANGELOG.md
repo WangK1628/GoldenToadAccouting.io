@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.2.1] - 2026-08-20
+
+### Fixed
+
+- Android GitHub Actions：`gradlew` 可执行权限、debug 签名可安装 APK
+- 登录页：本地验证码自动填入输入框
+
+### Changed
+
+- 文档首页增加网页版入口预览
+- APK 版本号 0.2.0（versionCode 2）
+
 ## [0.2.0] - 2026-08-20
 
 ### Added

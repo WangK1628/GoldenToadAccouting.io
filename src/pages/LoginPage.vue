@@ -18,6 +18,7 @@ const code = ref('')
 const password = ref('')
 const loading = ref(false)
 const codeCooldown = ref(0)
+const lastCode = ref('')
 
 let cooldownTimer: ReturnType<typeof setInterval> | null = null
 
@@ -37,7 +38,9 @@ async function sendCode() {
   if (codeCooldown.value > 0) return
   try {
     const generated = authService.requestVerificationCode(email.value)
-    toast.success(`验证码：${generated}（本地版直接显示）`)
+    lastCode.value = generated
+    code.value = generated
+    toast.success(`验证码已填入：${generated}`)
     startCooldown()
   } catch (error) {
     toast.error(error instanceof Error ? error.message : '发送失败')
@@ -116,7 +119,10 @@ async function skipLogin() {
           />
         </label>
 
-        <p class="hint">未注册将自动注册并合并游客数据 · 本地版验证码直接显示</p>
+        <p class="hint">
+          未注册将自动注册。本地版无邮件服务，验证码会直接填入输入框。
+        </p>
+        <p v-if="lastCode" class="code-hint">本次验证码：{{ lastCode }}</p>
 
         <button type="submit" class="primary" :disabled="loading">
           {{ loading ? '登录中…' : '登录 / 注册' }}
@@ -268,10 +274,17 @@ async function skipLogin() {
 }
 
 .hint {
-  margin: 0 0 0.85rem;
+  margin: 0 0 0.45rem;
   font-size: 0.72rem;
   color: var(--muted-2);
   line-height: 1.45;
+}
+
+.code-hint {
+  margin: 0 0 0.85rem;
+  font-size: 0.82rem;
+  color: var(--brand-deep);
+  font-weight: 600;
 }
 
 .primary {

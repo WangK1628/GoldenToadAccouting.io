@@ -27,7 +27,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "cap:sync": "npm run build && npx cap sync android",
-    "android:build": "npm run cap:sync && cd android && gradlew.bat assembleRelease"
+    "android:build": "npm run cap:sync && npm run android:assemble",
+    "android:assemble": "node -e \"require('node:child_process').execSync(process.platform==='win32'?'gradlew.bat assembleRelease':'./gradlew assembleRelease',{cwd:'android',stdio:'inherit'})\""
   },
   "dependencies": {
     "@capacitor/android": "^8.5.0",
